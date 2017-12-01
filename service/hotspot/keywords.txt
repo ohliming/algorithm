@@ -1,0 +1,16 @@
+阿里巴巴,淘宝,京东,聚美优品,唯品会,亚马逊,Amazon,当当
+腾讯,微信,Wechat,QQ,手Q,陌陌,Snapchat,Whatsapp,Kik,Line,Kakao Talk
+微软,Microsoft,苹果,Apple,IBM,小米,奇虎360,DJI大疆,华为,乐视,一加,锤子,大疆
+阿里,阿里巴巴,百度,58同城,58到家,美团,饿了么,京东,糯米,百姓网,搜房,易居中国
+Uber,滴滴快的,神州租车,易到用车,易到,汽车之家,优信
+携程,去哪儿,去啊,阿里旅行,途牛,同程,艺龙
+Google,谷歌,搜狗,奇虎360
+爱奇艺,优酷土豆,阿里影业,乐视影业,PPTV
+雅虎,Yahoo,网易,搜狐,新浪
+网易,盛大,完美世界,畅游
+支付宝,微信支付,Apple Pay,百度钱包
+Paypal,eBay,Tesla,Oculus,Facebook,Twitter,Youtube,Pinterest,LinkedIn,Parrot,Gopro,Samsung,Htc,Intel,Arm,Salesforce,Box,Dropbox ,Spotify,Airbnb,Cyanogen,Uber,Lyft,Palantir,Foursquare,Square
+知乎,今日头条,Zaker,Quora
+发布,推出,研发,启动,新品,新产品,版本,业务,进军,入股,战略,上线
+融资,投资,美元,人民币,种子轮,天使轮,PreA,A轮,B轮,C轮,D轮,E轮,IPO,上市,私有化,收购,并购,合并,倒闭
+加入,任命,离职,组织架构,组织结构,事业部,事业群,CEO,COO,CMO,CFO,CIO

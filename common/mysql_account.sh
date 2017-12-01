@@ -1,0 +1,35 @@
+########################
+##  数据库配置
+########################
+DB_HOST=[[[DB_HOST]]]
+
+## mysql_readall
+DB_READOP_USER=[[[DB_READOP_USER]]]
+DB_READOP_PASSWD=[[[DB_READOP_PASSWD]]]
+
+## mysql_krplus
+DB_KRPLUS_USER=[[[DB_KRPLUS_USER]]]
+DB_KRPLUS_PASSWD=[[[DB_KRPLUS_PASSWD]]]
+DB_KRPLUS_NAME=[[[DB_KRPLUS_NAME]]]
+
+## mysql_insight
+DB_INSIGHT_USER=[[[DB_INSIGHT_USER]]]
+DB_INSIGHT_PASSWD=[[[DB_INSIGHT_PASSWD]]]
+DB_INSIGHT_NAME=[[[DB_INSIGHT_NAME]]]
+
+## mysql_crm
+DB_CRM_USER=[[[DB_CRM_USER]]]
+DB_CRM_PASSWD=[[[DB_CRM_PASSWD]]]
+DB_CRM_NAME=[[[DB_CRM_NAME]]]
+
+## mysql_stat
+DB_STAT_USER=[[[DB_STAT_USER]]]
+DB_STAT_PASSWD=[[[DB_STAT_PASSWD]]]
+DB_STAT_NAME=[[[DB_STAT_NAME]]]
+
+## mysql_audit
+DB_AUDIT_USER=[[[DB_AUDIT_USER]]]
+DB_AUDIT_PASSWD=[[[DB_AUDIT_PASSWD]]]
+DB_AUDIT_NAME=[[[DB_AUDIT_NAME]]]
+
+

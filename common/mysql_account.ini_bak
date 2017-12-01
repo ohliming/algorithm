@@ -1,0 +1,44 @@
+[mysql_readall]
+host = [[[DB_HOST]]]
+user = [[[DB_READOP_USER]]]
+passwd = [[[DB_READOP_PASSWD]]]
+db = insight
+
+[mysql_krplus]
+host = [[[DB_HOST]]]
+user =  [[[DB_KRPLUS_USER]]]
+passwd = [[[DB_KRPLUS_PASSWD]]]
+db =  [[[DB_KRPLUS_NAME]]]
+
+[mysql_insight]
+host = [[[DB_HOST]]]
+user = [[[DB_INSIGHT_USER]]]
+passwd = [[[DB_INSIGHT_PASSWD]]]
+db = [[[DB_INSIGHT_NAME]]]
+
+[mysql_crm]
+host = [[[DB_HOST]]]
+user = [[[DB_CRM_USER]]]
+passwd = [[[DB_CRM_PASSWD]]]
+db = [[[DB_CRM_NAME]]]
+
+[mysql_stat]
+host = [[[DB_HOST]]]
+user = [[[DB_STAT_USER]]]
+passwd = [[[DB_STAT_PASSWD]]]
+db = [[[DB_STAT_NAME]]]
+
+[mysql_audit]
+host = [[[DB_HOST]]]
+user = [[[DB_AUDIT_USER]]]
+passwd = [[[DB_AUDIT_PASSWD]]]
+db = [[[DB_AUDIT_NAME]]]
+
+[mysql_sitemgr]
+host = [[[DB_HOST]]]
+user = [[[DB_SITEMGR_USER]]]
+passwd = [[[DB_SITEMGR_PASSWD]]]
+db = [[[DB_SITEMGR_NAME]]]
+
+
+

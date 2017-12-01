@@ -1,0 +1,9 @@
+该目录为常规回归测试目录
+
+所有测试脚本及目录均以test开头，测试类以Test开头，测试函数以test开头
+
+
+
+测试文件列表及说明
+test_db_fetcher_async.py：用于测试mysql异步操作类
+test_service_insight.py：用于测试insight服务各个接口函数
