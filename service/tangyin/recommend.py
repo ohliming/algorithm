@@ -36,22 +36,23 @@ class RecommendQuestion(object):
             for line in handle_f:
                 arr = line.strip().split('\t')
                 if len(arr) != 3: continue
-                qid, question_id, extra_score = arr[0], arr[1], arr[2]
+                qid, question_id, extra_score, difficulty = arr[0], arr[1], arr[2], float(arr[3])
                 dict_question_quality[question_id] = extra_score
                 max_num = qid
 
-        sql = "select id, question_id, extra_score from neworiental_v3.entity_question_quality where id > %s" % max_num
+        sql = "select id, question_id, extra_score, difficulty from neworiental_v3.entity_question_quality where id > %s" % max_num
         rows = self.db_fetcher.get_sql_result(sql, 'mysql_logdata')
         with open(save_file, 'a') as write_f:
             for row in rows:
-                qid, question_id, extra_score = row
+                qid, question_id, extra_score, difficulty = row
                 dict_question_quality[question_id] = extra_score
-                write_f.write('%s\t%s\t%s\n' % (qid, question_id, extra_score))
+                write_f.write('%s\t%s\t%s\t%s\n' % (qid, question_id, extra_score, difficulty))
 
         return dict_question_quality
 
     def getQuestionTopic(self, save_file = 'topic.txt'):
         dict_question_topic = {}
+        dict_topic_question = {}
         max_num = 0
         with open(save_file) as handle_f:
             for line in handle_f:
@@ -60,10 +61,11 @@ class RecommendQuestion(object):
                 tid, question_id, topic_id = arr[0], arr[1], arr[2]
                 question_id = long(question_id)
                 topic_id = long(topic_id)
-                if question_id not in dict_question_topic:
-                    dict_question_topic[question_id] = set()
+                if question_id not in dict_question_topic: dict_question_topic[question_id] = set()
+                if topic_id not in dict_topic_question: dict_topic_question[topic_id] = set()
 
                 dict_question_topic[question_id].add(topic_id)
+                dict_topic_question[topic_id].add(question_id)
                 max_num = tid
 
         sql = "select id, question_id, topic_id from neworiental_v3.link_question_topic where id > %s" % max_num
@@ -71,10 +73,11 @@ class RecommendQuestion(object):
         with open(save_file, 'a') as write_f:
             for row in rows:
                 tid, question_id, topic_id = row
-                if question_id not in dict_question_topic:
-                    dict_question_topic[question_id] = set()
+                if question_id not in dict_question_topic: dict_question_topic[question_id] = set()
+                if topic_id not in dict_topic_question: dict_topic_question[topic_id] = set()
 
                 dict_question_topic[question_id].add(topic_id)
+                dict_topic_question[topic_id].add(question_id)
                 write_f.write('%s\t%s\t%s\n' % (tid, question_id, topic_id))
         
         return dict_question_topic
@@ -101,7 +104,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '4e2245d4ab1b4a999571eb0fb63544b3'):
+    def getHeaders(self, teacher_id = '0ad0ca796caa4194af628131e36c65a9'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -256,5 +259,5 @@ class RecommendQuestion(object):
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
-    list_res = recommend.getEsResult(10754220,'','奇函数,定义,常数', 3, 1)
+    list_res = recommend.getEsResult(10800488,'','函数,lg,ln2,已知,ln', 3, 1)
     print list_res
