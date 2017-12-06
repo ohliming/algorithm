@@ -17,7 +17,6 @@ class QualityQuestion(object):
         self.redis_cache = CacheHelper('127.0.0.1', 6379, 1 , '') # redis
         self.dict_simple_science, self.dict_simple_art = self.getSimpleQustion()
 
-        self.dict_question_rate = self.getFallibilityQuestion()
         self.dict_question_topic = self.getQuestionTopic()
         self.dict_topic = self.getTopicDict()
 
@@ -116,5 +115,5 @@ class QualityQuestion(object):
 
 if __name__=='__main__':
     print 'this is quality question!'
-    quality = QualityQuestion() # do something
+    quality = QualityQuestion() # 
     quality.getTopicSimpleQuestion()

@@ -13,7 +13,7 @@ from common.db_fetcher import DataBaseFetcher
 
 class Report(object):
     """docstring for Report"""
-    def __init__(self, exercise_id, update_time = '2017-06-06 00:00:00'):
+    def __init__(self, exercise_id, update_time = '2017-09-01 00:00:00'):
         # do something inits
         self.db_fetcher = DataBaseFetcher()
         self.exercise_id = exercise_id
@@ -385,7 +385,7 @@ class Report(object):
                     target_questions = self.recommend.getEsResult(base_question, text, keywords, difficulty, qtype)
                     dict_question_target[base_question] = target_questions
 
-                if len(target_questions) > 4: target_questions = target_questions[:throld]
+                if len(target_questions) > throld: target_questions = target_questions[:throld]
                 for target in target_questions:
                     if haveTime <= 0 and len(recommend_questions) % 3 == 0: break
                     rec_question, types = target
