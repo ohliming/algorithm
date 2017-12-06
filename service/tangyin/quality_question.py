@@ -71,7 +71,6 @@ class QualityQuestion(object):
     def getSimpleQustion(self):
         dict_simple_science = {}
         dict_simple_art = {}
-
         is_redis = self.redis_cache.exists('62951166961') and self.redis_cache.exists('62951084550')
         if  is_redis:
             # science

@@ -28,6 +28,9 @@ class RecommendQuestion(object):
     def getThisQuestionTopic(self):
         return self.dict_question_topic
 
+    def getThisQuestionQUality(self):
+        return self.dict_question_quality
+
     def getQuestionQuality(self, save_file = 'quality.txt'):
         dict_question_quality = {}
 
@@ -35,9 +38,9 @@ class RecommendQuestion(object):
         with open(save_file) as handle_f:
             for line in handle_f:
                 arr = line.strip().split('\t')
-                if len(arr) != 3: continue
-                qid, question_id, extra_score, difficulty = arr[0], arr[1], arr[2], float(arr[3])
-                dict_question_quality[question_id] = extra_score
+                if len(arr) != 4: continue
+                qid, question_id, extra_score, difficulty = arr[0], long(arr[1]), arr[2], float(arr[3])
+                dict_question_quality[question_id] = extra_score, difficulty
                 max_num = qid
 
         sql = "select id, question_id, extra_score, difficulty from neworiental_v3.entity_question_quality where id > %s" % max_num
@@ -45,7 +48,7 @@ class RecommendQuestion(object):
         with open(save_file, 'a') as write_f:
             for row in rows:
                 qid, question_id, extra_score, difficulty = row
-                dict_question_quality[question_id] = extra_score
+                dict_question_quality[question_id] = extra_score, difficulty
                 write_f.write('%s\t%s\t%s\t%s\n' % (qid, question_id, extra_score, difficulty))
 
         return dict_question_quality
@@ -104,7 +107,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '0ad0ca796caa4194af628131e36c65a9'):
+    def getHeaders(self, teacher_id = '670ce809de6448629e6b422f659abede'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -237,7 +240,7 @@ class RecommendQuestion(object):
                         cost = self.normalLeven( str_pre, question_body )
                         isfilter = self.filterQuestion(question_id, text, qid, question_body)
                         if qid in self.dict_question_quality:
-                            extra_score = self.dict_question_quality[qid]
+                            extra_score, difficulty = self.dict_question_quality[qid]
                         else:
                             extra_score = 1
 

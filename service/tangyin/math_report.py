@@ -403,7 +403,7 @@ class Report(object):
             point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[point]
             for rec in recommend_questions: 
                 source_question, keywords, rec_question = rec
-                print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, point, point_name, source_question, exercise_id, rec_question, keywords, difficulty)
+                print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, point, point_name, source_question, rec_question, keywords, difficulty)
     
     def importDefault(self):
         defult_list = [(10805815,0), (10806190, 2), (10805815, 4), (10806184, 6), (10806182, 8), (10806169, 10), (10806104, 12), (10806057, 14), (10805815, 16), (10806068, 18)]
@@ -461,7 +461,7 @@ class Report(object):
             point_id = str(point_id)
             dict_point[point_id] =  name, ptype, question_type, level, parent_id, link_id
             if ptype == 3: # 
-                arr_topic = topics_id.strip().split(',')
+                arr_topic = [ long(x) for x in topics_id.strip().split(',') ]
                 for topic in arr_topic:
                     if topic not in dict_topic_point:
                         dict_topic_point[topic] = []
@@ -593,7 +593,7 @@ class Report(object):
                 ascore, score = self.getScore(question_num, answer)
                 exam_key = '%s-%s' % (student_id, question_exercise_id)
 
-                if key not in dict_student_score: dict_student_score[key] = 0
+                if exam_key not in dict_student_score: dict_student_score[exam_key] = 0
                 dict_student_score[exam_key] += score
 
         return dict_student_score
@@ -601,8 +601,8 @@ class Report(object):
     def getFirstPoint(self): # point
         dict_relation_point13 = {}
         sql = "select a.id id3, a.`name` name3, c.id id1, c.`name` name1 from entity_exam_points a join entity_exam_points  \
-                b on b.id = a.parent_id join entity_exam_points c on c.id = b.parent_id"
-        rows = self.db_fetcher.get(sql, 'mysql_logdata')
+                b on b.id = a.parent_id join entity_exam_points c on c.id = b.parent_id where a.type = 3"
+        rows = self.db_fetcher.get_sql_result(sql, 'mysql_logdata')
         for row in rows:
             point3, name3, point1, name1 = row
             dict_relation_point13[point3] = name3, point1, name1
@@ -612,7 +612,8 @@ class Report(object):
     def getExerciseName(self):
         dict_exercise_name = {}
         sql = "select DISTINCT a.question_exercise_id, b.resource_name from link_question_answer a join neworiental_v3.entity_exercise b \
-                on b.id = a.question_exercise_id where update_time >= \'%s\'" % self.update_time
+                on b.id = a.question_exercise_id where a.update_time >= \'%s\'" % self.update_time
+
         exercise_rows = self.db_fetcher.get_sql_result(sql, 'mysql_logdata')
         for exercise_row in exercise_rows:
             exercise_id, resource_name = exercise_row
@@ -620,46 +621,96 @@ class Report(object):
 
         return dict_exercise_name
 
-    def getData(self, exercise_id):
+    def getData(self):
         dict_student_score = self.getStudentScore()
         dict_relation_point13 = self.getFirstPoint() # point 
         dict_exercise_name = self.getExerciseName()
+
+        dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
+        dict_question_quality = self.recommend.getThisQuestionQUality() # question quality
+
         print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % \
             ('学生id', '题目id', '题目类型', '一级考点id', '一级考点名称', '三级考点id', '三级考点名称', '提交时间', '试卷名称', '成绩', '题集id', '题目满分', '题目得分', '题目难度', '答题结果', '试卷题号', '错误原因')
 
-        for item in self.exam_list_records: # 
+        for exam_item in self.exam_list_records: # exam
             question, student_id, ret, answer, submit_time, question_type = exam_item
             if question in self.dict_realtion_quesion:
                 link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[question]
-                arr_points = link_point_id.strip().split(',')
+                arr_points = [int(x) for x in link_point_id.strip().split(',')]
                 exam_key = '%s-%s' % (student_id, question_exercise_id)
                 str_point1, str_name1, str_point3, str_name3 = '', '', '', ''
                 is_first = True
                 for point3 in arr_points:
-                    name3, point1, name1 = self.dict_relation_point13[point3]
+                    name3, point1, name1 = dict_relation_point13[point3]
                     if is_first == True:
-                        str_point3, str_name3, point1, name1 = point3, name3, point1, name1
+                        str_point3, str_name3, str_point1, str_name1 = str(point3), str(name3), str(point1), str(name1)
+                        is_first = False
                     else:
-                        str_point3 += ',%s' % point3
+                        str_point3 += ',%d' % point3
                         str_name3 += ',%s' % name3
-                        str_point1 += ',%s' % point1
+                        str_point1 += ',%d' % point1
                         str_name1 += ',%s' % name1
 
-                resource_name = self.dict_exercise_name[exercise_id]
+                resource_name = dict_exercise_name[question_exercise_id]
                 exercise_score = dict_student_score[exam_key] if exam_key in dict_student_score else 0
                 a_score ,i_score =  self.getScore(question_num, answer)
-                error_text = getErrorText(answer)
+                error_text = self.getErrorText(answer)
                 print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (student_id, link_question_id, question_type, str_point1, str_name1, str_point3,
-                     str_name3, submit_time, resource_name, exercise_score, exercise_id, a_score, i_score, difficulty, ret, question_num, error_text)
-            
-        for item in self.practice_list_records: # exam
-            pass
-            # 
+                     str_name3, submit_time, resource_name, exercise_score, question_exercise_id, a_score, i_score, difficulty, ret, question_num, error_text)
+
+        for practice_item in self.practice_list_records: # practice
+            question, student_id, ret, answer, submit_time, question_type = practice_item
+            str_point1, str_name1, str_point3, str_name3 = '', '', '', ''
+            is_first = True
+            if question in dict_question_topic:
+                if question in dict_question_topic:
+                    topic_set = dict_question_topic[question]
+                    for topic in topic_set:
+                        if topic in self.dict_topic_point:
+                            arr_point3 = [ int(x) for x in self.dict_topic_point[topic] ]
+                            for point3 in arr_point3:
+                                name3, point1, name1 = dict_relation_point13[point3]
+                                if is_first == True:
+                                    str_point3, str_name3, str_point1, str_name1 = str(point3), str(name3), str(point1), str(name1)
+                                    is_first = False
+                                else:
+                                    str_point3 += ',%s' % point3
+                                    str_name3 += ',%s' % name3
+                                    str_point1 += ',%s' % point1
+                                    str_name1 += ',%s' % name1
+
+            a_score, i_score = 0, 0
+            # 单选题 选择题 填空题
+            if question_type == '单选题' or question_type == '选择题' or question_type == '填空题':
+                a_score = 5
+            else:
+                a_score = 12
+
+            if ret == 1:
+                i_score = a_score
+            elif ret == 5:
+                i_score = 0.5 * a_score
+
+            difficulty = 1
+            if question in dict_question_quality: 
+                extra_score, difficulty = dict_question_quality[question]
+                if difficulty < 0.3:
+                    difficulty = 1
+                elif difficulty >= 0.3 and difficulty < 0.6:
+                    difficulty = 2
+                elif difficulty >= 0.6 and difficulty < 0.9:
+                    difficulty = 3
+                elif difficulty >= 0.9:
+                    difficulty = 4
+
+            errorText = '正确' if ret == 1 else '错误'
+            print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (student_id, question, question_type, str_point1, str_name1, str_point3, 
+                str_name3, submit_time, '推送练习', 0, 0, a_score, i_score, difficulty, ret, 0, errorText)
+
 
 if __name__=='__main__':
     exercise_id = 446361
     report = Report(exercise_id)
-    # do something
     if sys.argv[1] == 'output':
         #dict_question_words = report.getQuestionWords()
         dict_students_point_question = report.statQustionReport() # report
@@ -674,3 +725,5 @@ if __name__=='__main__':
         report.import2DataBase(flag)
     elif sys.argv[1] == 'base':
         report.getData()
+    elif sys.argv[1] == 'mon':
+        print 'this is monday recommend'
