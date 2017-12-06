@@ -39,7 +39,7 @@ class RecommendQuestion(object):
             for line in handle_f:
                 arr = line.strip().split('\t')
                 if len(arr) != 4: continue
-                qid, question_id, extra_score, difficulty = arr[0], long(arr[1]), arr[2], float(arr[3])
+                qid, question_id, extra_score, difficulty = arr[0], long(arr[1]), int(arr[2]), float(arr[3])
                 dict_question_quality[question_id] = extra_score, difficulty
                 max_num = qid
 
@@ -107,7 +107,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '670ce809de6448629e6b422f659abede'):
+    def getHeaders(self, teacher_id = '896150ca49ad4070b5f45f4176b99fbe'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -190,7 +190,6 @@ class RecommendQuestion(object):
         for item in list_rank:
             qid, qtype, topic_list, extra_score = item
             set_target = self.dict_question_topic[qid] if qid in self.dict_question_topic else set()
-
             score = (1 - numpy.tanh(0.03*pos)) * 60 + self.dict_quality[extra_score]
             if len(set_target & set_source) > 0:
                 score += 15
