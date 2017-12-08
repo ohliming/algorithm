@@ -714,8 +714,8 @@ class Report(object):
         self.importDefault()
         is_first, insert_score = 1, 0
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
-        records =  self.exam_list_records + self.practice_list_records
-        for item in records:
+        
+        for item in self.exam_list_records:
             question, student_id, ret, answer, submit_time, question_type = item
             if submit_time > str_monday:
                 if question in self.dict_realtion_quesion:

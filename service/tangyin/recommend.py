@@ -107,7 +107,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '896150ca49ad4070b5f45f4176b99fbe'):
+    def getHeaders(self, teacher_id = '5e03e30f99a6407781a62559e07416cb'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -249,9 +249,9 @@ class RecommendQuestion(object):
                             qtype = 2
                         else:
                             qtype = 3
-                        bCharge = (cost > throld_word) and (isfilter > 0) and (len(analysis) > 50) and (bqtype == qtype)
+                        bCharge = (cost > throld_word) and (isfilter > 0) and (len(analysis) > 50) and bqtype == qtype
                         if bCharge:
-                            list_rank.append((qid, qtype, item['topic_list'], extra_score))
+                            list_rank.append((qid, qtype, item['topic_list'], extra_score)) 
                             str_pre = question_body
             except:
                 continue
@@ -261,5 +261,5 @@ class RecommendQuestion(object):
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
-    list_res = recommend.getEsResult(10800488,'','函数,lg,ln2,已知,ln', 3, 1)
+    list_res = recommend.getEsResult(10814819,'','几何体,三视图,如图所示,体积', 3, 1)
     print list_res
