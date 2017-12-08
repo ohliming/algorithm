@@ -61,7 +61,7 @@ class Report(object):
                 parent_question_id = dict_content['parent_id']
 
                 rank = dict_content['rank']
-                link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[parent_question_id]
+                link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[parent_question_id]
                 if  question_num >= 17 and question_num <= 21:
                     if rank == 1: 
                         exam_list_records.append([parent_question_id, student_id, ret, answer, submit_time, question_type])
@@ -142,20 +142,20 @@ class Report(object):
     def getRelationQuestion(self):
         dict_realtion_quesion = {}
         dict_point_question_num = {}
-        sql = "select a.link_question_id, a.link_answer_id, a.link_point_id, a.question_num, b.difficulty, a.question_exercise_id from link_question_answer a join neworiental_v3.entity_question b on a.link_question_id = \
+        sql = "select a.link_question_id, a.link_answer_id, a.link_point_id, a.question_num, b.difficulty, a.question_exercise_id, b.question_type from link_question_answer a join neworiental_v3.entity_question b on a.link_question_id = \
             b.id  where a.update_time >= \'%s\'" % self.update_time
         rows = self.db_fetcher.get_sql_result(sql, 'mysql_logdata')
         dict_parent_quesion  = {}
         link_parent_list = []
         for row in rows:
-            link_question_id,link_answer_id, link_point_id, question_num, difficulty, question_exercise_id = row
-            dict_realtion_quesion[link_answer_id] = link_question_id, link_point_id, question_num, difficulty, question_exercise_id
+            link_question_id,link_answer_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = row
+            dict_realtion_quesion[link_answer_id] = link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type
             arr_point = link_point_id.strip().split(',')
             for point in arr_point:
                 if point not in dict_point_question_num:
                     dict_point_question_num[point] = []
 
-                dict_point_question_num[point].append([link_question_id, question_num, difficulty, question_exercise_id])
+                dict_point_question_num[point].append([link_question_id, question_num, difficulty, question_exercise_id, question_type])
 
         return dict_realtion_quesion, dict_point_question_num
 
@@ -196,11 +196,11 @@ class Report(object):
             question, student_id, ret, answer, submit_time, question_type = item
 
             if question in self.dict_realtion_quesion:
-                link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[question]
+                link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
                 arr_points = link_point_id.strip().split(',')
                 ascore, score = self.getScore(question_num, answer)
-
                 is_right = (answer =='A') or (answer == 'B')
+
                 # 1 point
                 for point in arr_points:
                     if point in self.dict_point:
@@ -293,12 +293,11 @@ class Report(object):
             for item in records:
                 question, student_id, ret, answer, submit_time, question_type = item
                 if answer == 'answer': continue
-
                 if question in self.dict_realtion_quesion:
-                    link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[question]
-                    if question_num <= 12:
+                    link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
+                    if question_type == '单选题' or question_type == '选择题':
                         qtype = 1
-                    elif question_num >= 13 and question_num <=16:
+                    elif question_type == '填空题':
                         qtype = 2
                     else:
                         qtype = 3
@@ -318,19 +317,18 @@ class Report(object):
                             if point not in dict_question_point:
                                 dict_question_point[point] = []
 
-                            dict_question_point[point].append((link_question_id, qtype))
+                            dict_question_point[point].append((link_question_id, qtype, submit_time))
                             name, ptype, question_type, level, parent_id, link_id = self.dict_point[point]
                             acc = dict_point_acc[name]
                             if point not in dict_student_points[student_id]:
                                 dict_student_points[student_id][point] = 0.0
 
-                            rfa = 1 if submit_time > self.update_time else 10
-                            dict_student_points[student_id][point] += dict_coef[point]*(a_score - score)*acc / math.log(rfa+bate*(level + difficulty))
+                            if question_exercise_id == self.exercise_id:
+                                dict_student_points[student_id][point] +=  dict_coef[point]*(a_score - score)*acc / math.log(1+bate*(level + difficulty))
 
             sort_error = sorted(dict_error.items(), key = lambda x:x[1], reverse = True)
             if len(dict_student_points[student_id]) > 0:
                 sort_point = sorted(dict_student_points[student_id].items(), key = lambda x:x[1], reverse = True)
-                point  = sort_point[0][0]
                 student_name = self.dict_students[student_id]
                 point_name1, ptype1, question_type1, level1, parent_id1, link_id1 = self.dict_point[point]
                 point_name2, ptype2, question_type2, level2, parent_id2, link_id2 = self.dict_point[sort_point[1][0]]
@@ -340,16 +338,14 @@ class Report(object):
                 error1, error1score = sort_error[0][0], sort_error[0][1]
                 error2, error2score = sort_error[1][0], sort_error[1][1]
                 error1_name, error2_name = self.getErrorText(error1), self.getErrorText(error2)
-
-                arr_question = dict_question_point[point]
-                dict_students_point_question[student_id] = point, arr_question
+                dict_students_point_question[student_id] = sort_point , dict_question_point
 
         return dict_students_point_question
 
     def getPoint2Question(self):
         dict_point_org_question = {}
         for answer_id in self.dict_realtion_quesion:
-            link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[answer_id]
+            link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[answer_id]
             arr_point = link_point_id.strip().split(',')
 
             for item in arr_point:
@@ -360,50 +356,55 @@ class Report(object):
 
         return dict_point_org_question
 
-    def pointsRecQuestion(self, dict_students_point_question, dict_diff, throld = 4):
+    def pointsRecQuestion(self, dict_students_point_question, dict_diff, throld = 5):
         # 1,2 choice question 1:easy 2:difficulty 3,4: comprehensive problem 3:easy 4:difficulty
         # dict_point_org_question = self.getPoint2Question() # org question point
         dict_question_text = self.getQuestionWords()
         dict_question_target= {}
         dict_student_recommend_question = {}
-        print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % ('学生id', '学生名字', '考点', '考点名称', '原题id', '题集id(非答题卡)', '推荐习题id', '关键词', '难度')
+        print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % ('学生id', '学生名字', '考点', '考点名称', '原题id', '推荐习题id', '关键词', '难度')
         for student_id in dict_students_point_question:
-            point, arr_question = dict_students_point_question[student_id]
-            key = '%s-%s' % (student_id, point)
-            rateRight, difficulty = dict_diff[key] if key in dict_diff else (0.0, 1)
+            dict_target_point, dict_question_point_target = dict_students_point_question[student_id]
             haveTime = 60
-            recommend_questions, set_de_weight = [], set(arr_question)
-            pre_set = set() # 
-            for base_question, qtype in arr_question:
+            for item_target in dict_target_point:
                 if haveTime <= 0  and len(recommend_questions) % 3 == 0: break
-                keywords, text = dict_question_text[base_question]
-                text = text.replace('\n', '').strip('\r').strip() # filter
+                item_point = item_target[0]
+                arr_question = sorted(dict_question_point_target[item_point], key = lambda x:x[-1], reverse = True) 
 
-                if base_question in dict_question_target:
-                    target_questions = dict_question_target[base_question]
-                else:
-                    target_questions = self.recommend.getEsResult(base_question, text, keywords, difficulty, qtype)
-                    dict_question_target[base_question] = target_questions
+                key = '%s-%s' % (student_id, item_point)
+                rateRight, difficulty = dict_diff[key] if key in dict_diff else (0.0, 1)
+                recommend_questions, set_de_weight = [], set(arr_question)
+                pre_set = set() # 
+                for base_question, qtype, submit_time in arr_question:
+                    if haveTime <= 0  and len(recommend_questions) % 3 == 0: break
+                    keywords, text = dict_question_text[base_question]
+                    text = text.replace('\n', '').strip('\r').strip() # filter
 
-                if len(target_questions) > throld: target_questions = target_questions[:throld]
-                for target in target_questions:
-                    if haveTime <= 0 and len(recommend_questions) % 3 == 0: break
-                    rec_question, types = target
-                    if rec_question in set_de_weight: continue
-                    if types == 1:
-                        haveTime += -4
+                    if base_question in dict_question_target:
+                        target_questions = dict_question_target[base_question]
                     else:
-                        haveTime += -15
+                        target_questions = self.recommend.getEsResult(base_question, text, keywords, difficulty, qtype)
+                        dict_question_target[base_question] = target_questions
 
-                    if rec_question not in pre_set:
-                        recommend_questions.append((base_question, keywords, rec_question))
-                        pre_set.add(rec_question)
+                    if len(target_questions) > throld: target_questions = target_questions[:throld]
+                    for target in target_questions:
+                        if haveTime <= 0 and len(recommend_questions) % 3 == 0: break
+                        rec_question, types = target
+                        if rec_question in set_de_weight: continue
+                        if types == 1:
+                            haveTime += -4
+                        else:
+                            haveTime += -15
+
+                        if rec_question not in pre_set:
+                            recommend_questions.append((base_question, keywords, rec_question, item_point))
+                            pre_set.add(rec_question)
 
             student_name = self.dict_students[student_id]
-            point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[point]
-            for rec in recommend_questions: 
-                source_question, keywords, rec_question = rec
-                print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, point, point_name, source_question, rec_question, keywords, difficulty)
+            for rec_item in recommend_questions:
+                source_question, keywords, rec_question, item_point = rec_item
+                point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
+                print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
     
     def importDefault(self):
         defult_list = [(10805815,0), (10806190, 2), (10805815, 4), (10806184, 6), (10806182, 8), (10806169, 10), (10806104, 12), (10806057, 14), (10805815, 16), (10806068, 18)]
@@ -427,24 +428,21 @@ class Report(object):
         self.importDefault()
         if flag == 1: # 1,3 5 recomend
             update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
-            insert_sql = "insert into entity_question_recommend(student_id,student_name,point,point_name,question_id,exercise_id,recommend_id,keywords,difficulty) values"
+            insert_sql = "insert into entity_question_recommend(student_id,student_name,point,point_name,question_id,recommend_id,keywords,difficulty) values"
             insert_score = 0
             is_first = 1
             with open(fname) as rec_f:
                 for line in rec_f:
-                    if insert_score == 0:
-                        insert_score += 1
-                        continue
-                    
-                    arr = line.strip().split('\t')
-                    student_id, question_id = arr[0], arr[6]
-                    if is_first == 1:
-                        update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
-                        insert_sql += "(%s,\'%s\',%s, \'%s\', %s, %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8])
-                        is_first = 0
-                    else:
-                        update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
-                        insert_sql += ",(%s,\'%s\',%s, \'%s\', %s, %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8])
+                    if insert_score > 1:
+                        arr = line.strip().split('\t')
+                        student_id, question_id = arr[0], arr[5]
+                        if is_first == 1:
+                            update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
+                            insert_sql += "(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
+                            is_first = 0
+                        else:
+                            update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
+                            insert_sql += ",(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
 
                     insert_score += 1
 
@@ -506,7 +504,7 @@ class Report(object):
         for exam_item in self.exam_list_records:
             question, student_id, ret, answer, submit_time, question_type = exam_item
             if question in self.dict_realtion_quesion:
-                link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[question]
+                link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
                 arr_point = link_point_id.strip().split(',')
                 is_right = 1 if answer == 'A' or answer == 'B' else 0
 
@@ -588,7 +586,7 @@ class Report(object):
             question, student_id, ret, answer, submit_time, question_type = exam_item
 
             if question in self.dict_realtion_quesion:
-                link_question_id, link_point_id, question_num, difficulty, question_exercise_id = self.dict_realtion_quesion[question]
+                link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
                 arr_points = link_point_id.strip().split(',')
                 ascore, score = self.getScore(question_num, answer)
                 exam_key = '%s-%s' % (student_id, question_exercise_id)
@@ -707,9 +705,39 @@ class Report(object):
             print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (student_id, question, question_type, str_point1, str_name1, str_point3, 
                 str_name3, submit_time, '推送练习', 0, 0, a_score, i_score, difficulty, ret, 0, errorText)
 
+    def recommendMonday(self):
+        d1 = datetime.datetime.now()
+        d3 = d1 + datetime.timedelta(days =-5)
+        str_monday = d3.strftime("%Y-%m-%d %H:%M:%S")
+
+        self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
+        self.importDefault()
+        is_first, insert_score = 1, 0
+        update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
+        records =  self.exam_list_records + self.practice_list_records
+        for item in records:
+            question, student_id, ret, answer, submit_time, question_type = item
+            if submit_time > str_monday:
+                if question in self.dict_realtion_quesion:
+                    if answer == 'A' or answer == 'B':
+                        ret = 1
+                    else:
+                        ret = 0
+
+                if ret == 1:
+                    if is_first == 1:
+                        update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question, 0, insert_score)
+                        is_first = 0
+                    else:
+                        update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question, 0, insert_score)
+
+                insert_score += 1
+
+        self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+
 
 if __name__=='__main__':
-    exercise_id = 446361
+    exercise_id = 450271
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         #dict_question_words = report.getQuestionWords()
@@ -726,4 +754,4 @@ if __name__=='__main__':
     elif sys.argv[1] == 'base':
         report.getData()
     elif sys.argv[1] == 'mon':
-        print 'this is monday recommend'
+        report.recommendMonday() # recommend monday
