@@ -406,7 +406,8 @@ class Report(object):
                 source_question, keywords, rec_question, item_point = rec_item
                 point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
-    
+
+
     def importDefault(self):
         defult_list = [(10805815,0), (10806190, 2), (10805815, 4), (10806184, 6), (10806182, 8), (10806169, 10), (10806104, 12), (10806057, 14), (10805815, 16), (10806068, 18)]
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
@@ -758,7 +759,7 @@ if __name__=='__main__':
         import datetime, calendar 
         now_date = datetime.date.today()
         is_flag = (now_date.weekday()  == calendar.FRIDAY or now_date.weekday() == calendar.MONDAY or now_date.weekday()  == calendar.WEDNESDAY)
-        flag = 1 # if is_flag == True else 1
+        flag = 0 if is_flag == True else 1
         report.import2DataBase(flag)
     elif sys.argv[1] == 'base':
         report.getData() # base data
