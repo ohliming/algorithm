@@ -20,7 +20,7 @@ class Report(object):
         self.dict_content_answer = {} # error content
         self.curr_time = datetime.datetime.now()
 
-        self.update_time = update_time # update time 
+        self.update_time = update_time # update time
         self.recommend = RecommendQuestion()
 
         self.dict_realtion_quesion, self.dict_question_num = self.getRelationQuestion()
@@ -379,7 +379,7 @@ class Report(object):
                 key = '%s-%s' % (student_id, item_point)
                 rateRight, difficulty = dict_diff[key] if key in dict_diff else (0.0, 1) 
                
-                pre_set = pre_set | set(arr_question) # 
+                pre_set = pre_set | set([x[0] for x in arr_question]) # 
                 for base_question, qtype, submit_time in arr_question:
                     if haveTime <= 0  and len(recommend_questions) % 3 == 0: break
                     keywords, text = dict_question_text[base_question]

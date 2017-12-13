@@ -317,5 +317,5 @@ class RecommendQuestion(object):
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
-    list_res = recommend.getEsResult(11011832,'','已知,抛物线,圆心,焦点,准线,半轴', 3, 1, set(), 4)
+    list_res = recommend.getEsResult(11011832,'','双曲线,直线,交点,心率,重庆,取值', 3, 1, set(), 4)
     print list_res
