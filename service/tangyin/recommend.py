@@ -4,7 +4,7 @@ import sys,os
 reload(sys)
 sys.setdefaultencoding('utf-8')
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
-import json, math, MySQLdb
+import json, math, MySQLdb, random
 from cStringIO import StringIO
 import httplib, urllib,urllib2,gzip,re,math,numpy
 from common.db_fetcher import DataBaseFetcher
@@ -13,10 +13,6 @@ class RecommendQuestion(object):
     def __init__(self):
         self.db_fetcher = DataBaseFetcher() # mysql handle
         self.dict_topic = self.getTopicDict()
-        self.dict_question_rate = self.getQuestionRate() # rate
-        self.dict_question_quality = self.getQuestionQuality()
-        self.dict_question_topic = self.getQuestionTopic() # topic
-
         self.dict_quality = {
             5:25,
             4:20,
@@ -24,6 +20,9 @@ class RecommendQuestion(object):
             2:10,
             1:5
         }
+
+        self.dict_question_quality = self.getQuestionQuality()
+        self.dict_question_topic, self.dict_topic_question = self.getQuestionTopic() # topic
 
     def getThisQuestionTopic(self):
         return self.dict_question_topic
@@ -48,6 +47,15 @@ class RecommendQuestion(object):
         with open(save_file, 'a') as write_f:
             for row in rows:
                 qid, question_id, extra_score, difficulty = row
+                if difficulty < 0.3:
+                    difficulty = 1
+                elif difficulty >= 0.3 and difficulty < 0.6:
+                    difficulty = 2
+                elif difficulty >= 0.6 and difficulty < 0.9:
+                    difficulty = 3
+                else:
+                    difficulty = 4
+
                 dict_question_quality[question_id] = extra_score, difficulty
                 write_f.write('%s\t%s\t%s\t%s\n' % (qid, question_id, extra_score, difficulty))
 
@@ -64,11 +72,22 @@ class RecommendQuestion(object):
                 tid, question_id, topic_id = arr[0], arr[1], arr[2]
                 question_id = long(question_id)
                 topic_id = long(topic_id)
+
                 if question_id not in dict_question_topic: dict_question_topic[question_id] = set()
-                if topic_id not in dict_topic_question: dict_topic_question[topic_id] = set()
+                if topic_id not in dict_topic_question: 
+                    dict_topic_question[topic_id] = {}
+
+                if question_id in self.dict_question_quality:
+                    extra_score, difficulty = self.dict_question_quality[question_id]
+                else:
+                    extra_score, difficulty = 3,2
 
                 dict_question_topic[question_id].add(topic_id)
-                dict_topic_question[topic_id].add(question_id)
+
+                if difficulty not in dict_topic_question[topic_id]:
+                    dict_topic_question[topic_id][difficulty] = []
+
+                dict_topic_question[topic_id][difficulty].append((question_id, extra_score))
                 max_num = tid
 
         sql = "select id, question_id, topic_id from neworiental_v3.link_question_topic where id > %s" % max_num
@@ -77,13 +96,29 @@ class RecommendQuestion(object):
             for row in rows:
                 tid, question_id, topic_id = row
                 if question_id not in dict_question_topic: dict_question_topic[question_id] = set()
-                if topic_id not in dict_topic_question: dict_topic_question[topic_id] = set()
+
+                if topic_id not in dict_topic_question: 
+                    dict_topic_question[topic_id] = {}
+
+                if question_id in self.dict_question_quality:
+                    extra_score, difficulty = self.dict_question_quality[question_id]
+                else:
+                    extra_score, difficulty = 3,2
 
                 dict_question_topic[question_id].add(topic_id)
-                dict_topic_question[topic_id].add(question_id)
+
+                if difficulty not in dict_topic_question[topic_id]:
+                    dict_topic_question[topic_id][difficulty] = []
+
+                dict_topic_question[topic_id][difficulty].append((question_id, extra_score))
                 write_f.write('%s\t%s\t%s\n' % (tid, question_id, topic_id))
+
+        # sort 
+        for topic in dict_topic_question:
+            for difficulty in dict_topic_question[topic]:
+                dict_topic_question[topic][difficulty] = sorted(dict_topic_question[topic][difficulty], key = lambda x:x[-1], reverse = True) # 
         
-        return dict_question_topic
+        return dict_question_topic, dict_topic_question
 
     def getTopicDict(self):
         dict_topic = {}
@@ -107,7 +142,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '5e03e30f99a6407781a62559e07416cb'):
+    def getHeaders(self, teacher_id = '2343d0f22de04c2f94da9ebffe34c9ae'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -139,30 +174,31 @@ class RecommendQuestion(object):
         return res
 
     def normalLeven(self, str1, str2):
-      len_str1 = len(str1) + 1
-      len_str2 = len(str2) + 1
-      #create matrix
-      matrix = [0 for n in range(len_str1 * len_str2)]
-      #init x axis
-      for i in range(len_str1):
-          matrix[i] = i
+        len_str1 = len(str1) + 1
+        len_str2 = len(str2) + 1
+        #create matrix
+        matrix = [0 for n in range(len_str1 * len_str2)]
+        #init x axis
+        for i in range(len_str1):
+            matrix[i] = i
 
-      #init y axis
-      for j in range(0, len(matrix), len_str1):
-          if j % len_str1 == 0:
-              matrix[j] = j // len_str1
+        #init y axis
+        for j in range(0, len(matrix), len_str1):
+            if j % len_str1 == 0:
+                matrix[j] = j // len_str1
 
-      for i in range(1, len_str1):
-          for j in range(1, len_str2):
-              if str1[i-1] == str2[j-1]:
-                  cost = 0
-              else:
-                  cost = 1
-              matrix[j*len_str1+i] = min(matrix[(j-1)*len_str1+i]+1,
+        for i in range(1, len_str1):
+            for j in range(1, len_str2):
+                if str1[i-1] == str2[j-1]:
+                    cost = 0
+                else:
+                    cost = 1
+                
+                matrix[j*len_str1+i] = min(matrix[(j-1)*len_str1+i]+1,
                                           matrix[j*len_str1+(i-1)]+1,
                                           matrix[(j-1)*len_str1+(i-1)] + cost)
 
-      return matrix[-1]
+        return matrix[-1]
 
     def translate(self, str):
         line = str.strip().decode('utf-8', 'ignore')
@@ -172,15 +208,6 @@ class RecommendQuestion(object):
         outStr = zh
 
         return outStr
-
-    def filterQuestion(self,qid_source, source_str, qid_target, target_str, min_throld = 0.1, max_throld =  0.9): # filter
-        isfilter = 1
-        rate_target = self.dict_question_rate[qid_target] if qid_target in self.dict_question_rate else 0.0
-        if rate_target > 0:
-            if rate_target < min_throld or rate_target > max_throld:
-                isfilter = -1
-
-        return isfilter
 
     def calScoreQustion(self, question_id, list_rank):
         dict_score = {}
@@ -207,7 +234,7 @@ class RecommendQuestion(object):
 
         return list_res
 
-    def getEsResult(self, question_id, text, keywords, difficulty, bqtype, throld_page = 10, throld_word = 5):
+    def getEsResult(self, question_id, text, keywords, difficulty, bqtype, pre_set, throld_size, throld_page = 10, throld_cost = 5, rank_size = 50):
         """
         url: http://jiaoshi.okjiaoyu.cn/ESRes4EMS/questionQuery?subjectId=4&keyword=%s&difficulty=&questionType=&page=3
         questionType:  1   选择题 2   填空题 3   判断题 4   简答题 6  综合题
@@ -237,7 +264,6 @@ class RecommendQuestion(object):
                             if len(option_list) != 4: continue
 
                         cost = self.normalLeven( str_pre, question_body )
-                        isfilter = self.filterQuestion(question_id, text, qid, question_body)
                         if qid in self.dict_question_quality:
                             extra_score, difficulty = self.dict_question_quality[qid]
                         else:
@@ -249,17 +275,47 @@ class RecommendQuestion(object):
                             qtype = 2
                         else:
                             qtype = 3
-                        bCharge = (cost > throld_word) and (isfilter > 0) and (len(analysis) > 50) and bqtype == qtype
+
+                        bCharge = (cost > throld_cost) and (len(analysis) > 50) and bqtype == qtype
                         if bCharge:
                             list_rank.append((qid, qtype, item['topic_list'], extra_score)) 
                             str_pre = question_body
             except:
                 continue
 
-        list_res = self.calScoreQustion(question_id, list_rank) # rank
+        list_index = self.calScoreQustion(question_id, list_rank) # rank
+        if len(list_index) > throld_size -1:
+            list_res = [x[0] for x in list_index[:throld_size-2] ] # end output
+        else:
+            list_res = [x[0] for x in list_index ]# end output
+
+        # 头部数据处理
+        if question_id in self.dict_question_topic:
+            topic_set = self.dict_question_topic[question_id]
+            tLen = len(topic_set) 
+            if  tLen > 0:
+                index = random.randint(0, tLen-1)
+                topic = list(topic_set)[index] # first
+                if difficulty in self.dict_topic_question[topic]: 
+                    list_res_question = []
+                    arr_content_question = self.dict_topic_question[topic][difficulty]
+                    for content_item in arr_content_question:
+                        res_question, extra_score = content_item
+
+                        if res_question not in pre_set and res_question != question_id:
+                            list_res_question.append(res_question)
+
+                        if len(list_res_question) > rank_size: break
+
+                    rnt = throld_size - len(list_res)
+                    while rnt > 0:
+                        pos = random.randint(0, len(list_res_question) - 1)
+                        list_res.append(list_res_question[pos])
+                        rnt += -1
+                    
         return list_res
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
-    list_res = recommend.getEsResult(10814819,'','几何体,三视图,如图所示,体积', 3, 1)
+    list_res = recommend.getEsResult(11011832,'','已知,抛物线,圆心,焦点,准线,半轴', 3, 1, set(), 4)
     print list_res
