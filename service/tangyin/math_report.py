@@ -368,7 +368,7 @@ class Report(object):
 
             arr_point, dict_question_point_target = dict_students_point_question[student_id]
             student_name = self.dict_students[student_id]
-            haveTime = 60
+            haveTime = 12
             recommend_questions = [] 
             pre_set = set()
             for item_target in arr_point:
@@ -394,11 +394,8 @@ class Report(object):
                     for rec_question in target_questions:
                         if haveTime <= 0 and len(recommend_questions) % 3 == 0: break
                         if rec_question in pre_set: continue
-                        if qtype == 1:
-                            haveTime += -4
-                        else:
-                            haveTime += -15
 
+                        haveTime += -1
                         recommend_questions.append((base_question, keywords, rec_question, item_point))
                         pre_set.add(rec_question)
 
@@ -747,7 +744,7 @@ class Report(object):
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 451357
+    exercise_id = 453253
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
@@ -761,6 +758,7 @@ if __name__=='__main__':
         is_flag = (now_date.weekday()  == calendar.FRIDAY or now_date.weekday() == calendar.MONDAY or now_date.weekday()  == calendar.WEDNESDAY)
         flag = 0 if is_flag == True else 1
         report.import2DataBase(flag)
+
     elif sys.argv[1] == 'base':
         report.getData() # base data
     elif sys.argv[1] == 'mon':
