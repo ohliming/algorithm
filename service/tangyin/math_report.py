@@ -730,8 +730,8 @@ class Report(object):
 
                 if ret == 1:
                     if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
-                    if dict_student_cnt[student_id] <= 12:
-                        #print '%s\t%s' % (student_id, question)
+                    if dict_student_cnt[student_id] < 12:
+                        # print '%s\t%s' % (student_id, question)
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question, 0, insert_score)
                             is_first = 0
