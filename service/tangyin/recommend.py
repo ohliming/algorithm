@@ -178,7 +178,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = 'ce1c400f0f6a4b348398cb207719dc2d'):
+    def getHeaders(self, teacher_id = 'e83b42bfcd0d445e837d870142ca1c14'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -301,7 +301,7 @@ class RecommendQuestion(object):
 
                         cost = self.normalLeven( str_pre, question_body )
                         if qid in self.dict_question_quality:
-                            extra_score, difficulty = self.dict_question_quality[qid]
+                            extra_score = self.dict_question_quality[qid]
                         else:
                             extra_score = 1
 
@@ -321,9 +321,11 @@ class RecommendQuestion(object):
 
         list_index = self.calScoreQustion(question_id, list_rank) # rank
         if len(list_index) > throld_size -1:
-            list_res = [x[0] for x in list_index[:throld_size-2] ] # end output
+            list_res = [x[0] for x in list_index[:throld_size-1] ] # end output
         else:
-            list_res = [x[0] for x in list_index ]# end output
+            list_res = [x[0] for x in list_index ] # end output
+
+        print list_res
 
         # 头部数据处理
         if question_id in self.dict_question_topic:
@@ -336,7 +338,7 @@ class RecommendQuestion(object):
                     difficulty, qtype = self.dict_question_base_info[question_id]
 
                     key = '%s-%s' % (difficulty, qtype)
-                    if key in self.dict_topic_question[topic]: 
+                    if key in self.dict_topic_question[topic]:
                         list_res_question = []
 
                         arr_content_question = self.dict_topic_question[topic][key]
@@ -353,10 +355,11 @@ class RecommendQuestion(object):
                             pos = random.randint(0, len(list_res_question) - 1)
                             list_res.append(list_res_question[pos])
                             rnt += -1
-                    
+
         return list_res
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
     list_res = recommend.getEsResult(11011832,'','双曲线,直线,交点,心率,重庆,取值', 3, 1, set(), 4)
+
     print list_res
