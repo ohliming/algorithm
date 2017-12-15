@@ -178,7 +178,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = 'e83b42bfcd0d445e837d870142ca1c14'):
+    def getHeaders(self, teacher_id = 'a5cc9ce422e74656a1334a990609b9c9'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -325,8 +325,6 @@ class RecommendQuestion(object):
         else:
             list_res = [x[0] for x in list_index ] # end output
 
-        print list_res
-
         # 头部数据处理
         if question_id in self.dict_question_topic:
             topic_set = self.dict_question_topic[question_id]
@@ -360,6 +358,6 @@ class RecommendQuestion(object):
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
-    list_res = recommend.getEsResult(11011832,'','双曲线,直线,交点,心率,重庆,取值', 3, 1, set(), 4)
+    list_res = recommend.getEsResult(11011832, '', '双曲线,直线,交点,心率,重庆,取值', 3, 1, set(), 4)
 
     print list_res
