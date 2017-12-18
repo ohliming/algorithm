@@ -756,7 +756,7 @@ class Report(object):
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 453253
+    exercise_id = 462842
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
@@ -768,9 +768,8 @@ if __name__=='__main__':
         import datetime, calendar 
         now_date = datetime.date.today()
         is_flag = (now_date.weekday()  == calendar.FRIDAY or now_date.weekday() == calendar.MONDAY or now_date.weekday()  == calendar.WEDNESDAY)
-        flag = 1#if is_flag == True else 1
+        flag = 0 if is_flag == True else 1
         report.import2DataBase(flag)
-
     elif sys.argv[1] == 'base':
         report.getData() # base data
     elif sys.argv[1] == 'mon':
