@@ -404,10 +404,10 @@ class Report(object):
                 point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
 
-
-    def importDefault(self):
+    def importDefault(self, is_new):
         defult_list = [(10805815,0), (10806190, 2), (10805815, 4), (10806184, 6), (10806182, 8), (10806169, 10), (10806104, 12), (10806057, 14), (10805815, 16), (10806068, 18)]
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
+        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score) values"
         db_rows = self.db_fetcher.get_sql_result("select student_id from entity_student_white_list", "mysql_white_list")
         is_first = 1
         for row in db_rows:
@@ -416,18 +416,25 @@ class Report(object):
                 question_id, subject_id = item
                 if is_first == 1:
                     update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, subject_id, 0)
+                    if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, subject_id, 0)
                     is_first = 0
                 else:
                     update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, subject_id, 0)
+                    new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, subject_id, 0)
 
-        self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+        if is_new == 1:
+       	    self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_white_list')
+       	else:
+       		self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
-    def import2DataBase(self, flag, fname = 'student_rec.txt'):
+    def import2DataBase(self, flag, is_new = 0, fname = 'student_rec.txt'):
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
-        self.importDefault()
+        if is_new == 1: self.db_fetcher.commit_sql_cmd("delete from sync_student_recommend_question", 'mysql_white_list') # update
+        self.importDefault(is_new) # import 
         if flag == 1: # 1,3 5 recomend
             update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
             insert_sql = "insert into entity_question_recommend(student_id,student_name,point,point_name,question_id,recommend_id,keywords,difficulty) values"
+            new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score) values"
             insert_score = 0
             is_first = 1
             with open(fname) as rec_f:
@@ -438,15 +445,20 @@ class Report(object):
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
                             insert_sql += "(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, 0, insert_score)
                             is_first = 0
                         else:
                             update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
                             insert_sql += ",(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
+                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, 0, insert_score)
 
                     insert_score += 1
 
-            self.db_fetcher.commit_sql_cmd(insert_sql, 'mysql_logdata')
-            self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+            #self.db_fetcher.commit_sql_cmd(insert_sql, 'mysql_logdata')
+            if is_new == 1:  # update mysql
+                self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_white_list') # new 
+            else:
+                self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
                     
     def getPoints(self):
         dict_point = {}
@@ -756,7 +768,7 @@ if __name__=='__main__':
         import datetime, calendar 
         now_date = datetime.date.today()
         is_flag = (now_date.weekday()  == calendar.FRIDAY or now_date.weekday() == calendar.MONDAY or now_date.weekday()  == calendar.WEDNESDAY)
-        flag = 0 if is_flag == True else 1
+        flag = 1#if is_flag == True else 1
         report.import2DataBase(flag)
 
     elif sys.argv[1] == 'base':
