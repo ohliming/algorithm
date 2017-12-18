@@ -141,11 +141,11 @@ class RecommendQuestion(object):
                     else:
                         question_type = 3
 
-                dict_question_topic[question_id].add(topic_id) # add 
-                if difficulty not in dict_topic_question[topic_id]:
-                    dict_topic_question[topic_id][difficulty] = []
-
                 key = '%s-%s' % (difficulty, question_type)
+                dict_question_topic[question_id].add(topic_id) # add 
+                if key not in dict_topic_question[topic_id]:
+                    dict_topic_question[topic_id][key] = []
+
                 dict_topic_question[topic_id][key].append((question_id, extra_score))
                 write_f.write('%s\t%s\t%s\n' % (tid, question_id, topic_id))
 
@@ -178,7 +178,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = 'a5cc9ce422e74656a1334a990609b9c9'):
+    def getHeaders(self, teacher_id = '5b41d6e38f464ed4a5ed5405549286dc'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
