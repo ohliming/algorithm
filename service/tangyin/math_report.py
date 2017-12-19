@@ -397,11 +397,11 @@ class Report(object):
                         if rec_question in pre_set: continue
 
                         haveTime += -1
-                        recommend_questions.append((base_question, keywords, rec_question, item_point))
+                        recommend_questions.append((base_question, keywords, rec_question, item_point, difficulty))
                         pre_set.add(rec_question)
 
             for rec_item in recommend_questions:
-                source_question, keywords, rec_question, item_point = rec_item
+                source_question, keywords, rec_question, item_point,difficulty = rec_item
                 point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
 
