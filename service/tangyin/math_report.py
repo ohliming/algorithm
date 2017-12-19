@@ -724,7 +724,7 @@ class Report(object):
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
         self.importDefault() # import 
         is_first, insert_score = 1, 0
-        update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
+        update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
         dict_student_cnt = {}
         records = self.exam_list_records + self.practice_list_records
         for item in records:
@@ -740,7 +740,7 @@ class Report(object):
                     else:
                         ret = 0
 
-                if ret == 1:
+                if ret == 0:
                     if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
                     if dict_student_cnt[student_id] < 12:
                         # print '%s\t%s' % (student_id, question)
