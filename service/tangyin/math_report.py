@@ -385,11 +385,12 @@ class Report(object):
                     keywords, text = dict_question_text[base_question]
                     text = text.replace('\n', '').strip('\r').strip() # filter
 
-                    if base_question in dict_question_target:
-                        target_questions = dict_question_target[base_question]
+                    base_question_key = '%s-%s' % (base_question, difficulty)
+                    if base_question_key in dict_question_target:
+                        target_questions = dict_question_target[base_question_key]
                     else:
                         target_questions = self.recommend.getEsResult(base_question, text, keywords, difficulty, qtype, pre_set, throld)
-                        dict_question_target[base_question] = target_questions
+                        dict_question_target[base_question_key] = target_questions
 
                     for rec_question in target_questions:
                         if haveTime <= 0 and len(recommend_questions) % 3 == 0: break
