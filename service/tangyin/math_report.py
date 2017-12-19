@@ -13,7 +13,7 @@ from common.db_fetcher import DataBaseFetcher
 
 class Report(object):
     """docstring for Report"""
-    def __init__(self, exercise_id, update_time = '2017-09-01 00:00:00'):
+    def __init__(self, exercise_id, update_time = '2017-11-01 00:00:00'):
         # do something inits
         self.db_fetcher = DataBaseFetcher()
         self.exercise_id = exercise_id
@@ -756,7 +756,7 @@ class Report(object):
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 462842
+    exercise_id = 455260
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
