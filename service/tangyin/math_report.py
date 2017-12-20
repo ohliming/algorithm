@@ -424,9 +424,9 @@ class Report(object):
                     new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, subject_id, 0)
 
         if is_new == 1:
-       	    self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_white_list')
-       	else:
-       		self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+            self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_white_list')
+        else:
+            self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
     def import2DataBase(self, flag, is_new = 0, fname = 'student_rec.txt'):
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
