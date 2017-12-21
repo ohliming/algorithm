@@ -12,7 +12,7 @@ from common.db_fetcher import DataBaseFetcher
 class RecommendQuestion(object):
     def __init__(self):
         self.db_fetcher = DataBaseFetcher() # mysql handle
-        self.dict_topic = self.getTopicDict()
+        self.dict_topic = self.getTopicDict() # topic
         self.dict_quality = {
             5:25,
             4:20,
@@ -178,7 +178,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '5b41d6e38f464ed4a5ed5405549286dc'):
+    def getHeaders(self, teacher_id = 'ac453426c5b9427eac245644e183366a'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -270,6 +270,38 @@ class RecommendQuestion(object):
 
         return list_res
 
+    def randomTopicHeader(self, question_id, list_res, pre_set, rank_size, throld_size):
+        # 头部数据处理
+        if question_id in self.dict_question_topic:
+            topic_set = self.dict_question_topic[question_id]
+            tLen = len(topic_set) 
+            if  tLen > 0:
+                index = random.randint(0, tLen-1)
+                topic = list(topic_set)[index] # first
+                if question_id in self.dict_question_base_info:
+                    difficulty, qtype = self.dict_question_base_info[question_id]
+
+                    key = '%s-%s' % (difficulty, qtype)
+                    if key in self.dict_topic_question[topic]:
+                        list_res_question = []
+
+                        arr_content_question = self.dict_topic_question[topic][key]
+                        for content_item in arr_content_question:
+                            res_question, extra_score = content_item
+
+                            if res_question not in pre_set and res_question != question_id:
+                                list_res_question.append(res_question)
+
+                            if len(list_res_question) > rank_size: break
+
+                        rnt = throld_size - len(list_res)
+                        while rnt > 0:
+                            pos = random.randint(0, len(list_res_question) - 1)
+                            list_res.append(list_res_question[pos])
+                            rnt += -1
+
+        return list_res
+
     def getEsResult(self, question_id, text, keywords, difficulty, bqtype, pre_set, throld_size, throld_page = 10, throld_cost = 5, rank_size = 20):
         """
         url: http://jiaoshi.okjiaoyu.cn/ESRes4EMS/questionQuery?subjectId=4&keyword=%s&difficulty=&questionType=&page=3
@@ -320,44 +352,14 @@ class RecommendQuestion(object):
                 continue
 
         list_index = self.calScoreQustion(question_id, list_rank) # rank
-        if len(list_index) > throld_size -1:
-            list_res = [x[0] for x in list_index[:throld_size-1] ] # end output
-        else:
-            list_res = [x[0] for x in list_index ] # end output
+        res_len =  throld_size-1 if len(list_index) > throld_size -1 else len(list_index)
+        list_res =  [x[0] for x in list_index[:res_len] ] # end output
 
-        # 头部数据处理
-        if question_id in self.dict_question_topic:
-            topic_set = self.dict_question_topic[question_id]
-            tLen = len(topic_set) 
-            if  tLen > 0:
-                index = random.randint(0, tLen-1)
-                topic = list(topic_set)[index] # first
-                if question_id in self.dict_question_base_info:
-                    difficulty, qtype = self.dict_question_base_info[question_id]
-
-                    key = '%s-%s' % (difficulty, qtype)
-                    if key in self.dict_topic_question[topic]:
-                        list_res_question = []
-
-                        arr_content_question = self.dict_topic_question[topic][key]
-                        for content_item in arr_content_question:
-                            res_question, extra_score = content_item
-
-                            if res_question not in pre_set and res_question != question_id:
-                                list_res_question.append(res_question)
-
-                            if len(list_res_question) > rank_size: break
-
-                        rnt = throld_size - len(list_res)
-                        while rnt > 0:
-                            pos = random.randint(0, len(list_res_question) - 1)
-                            list_res.append(list_res_question[pos])
-                            rnt += -1
+        list_res = self.randomTopicHeader(question_id, list_res, pre_set, rank_size, throld_size) #  header question random
 
         return list_res
 
 if __name__=='__main__':
     recommend = RecommendQuestion()
-    list_res = recommend.getEsResult(11011832, '', '双曲线,直线,交点,心率,重庆,取值', 3, 1, set(), 4)
-
+    list_res = recommend.getEsResult(11021712, '题干', '等比,路程,里数,算法,健步', 1, 1, set(), 4)
     print list_res

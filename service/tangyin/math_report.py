@@ -401,7 +401,7 @@ class Report(object):
                         pre_set.add(rec_question)
 
             for rec_item in recommend_questions:
-                source_question, keywords, rec_question, item_point,difficulty = rec_item
+                source_question, keywords, rec_question, item_point, difficulty = rec_item
                 point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
 
@@ -757,7 +757,7 @@ class Report(object):
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 455260
+    exercise_id = 457733
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
@@ -776,4 +776,4 @@ if __name__=='__main__':
     elif sys.argv[1] == 'mon':
         report.recommendMonday() # monday
     else:
-        pass # do nothing
+        pass # dual
