@@ -29,8 +29,8 @@ class RecommendQuestion(object):
     def getThisQuestionTopic(self):
         return self.dict_question_topic
 
-    def getThisQuestionQUality(self):
-        return self.dict_question_quality
+    def getThisQuestionBaseInfo(self):
+        return self.dict_question_base_info
 
     def getQuestionBaseInfo(self, save_file = 'question_base.txt'):
         dict_question_base_info = {}
@@ -178,7 +178,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = 'ac453426c5b9427eac245644e183366a'):
+    def getHeaders(self, teacher_id = 'a3c392eb322a4f02aefc7060be0afaf3'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -352,14 +352,13 @@ class RecommendQuestion(object):
                 continue
 
         list_index = self.calScoreQustion(question_id, list_rank) # rank
-        res_len =  throld_size-1 if len(list_index) > throld_size -1 else len(list_index)
-        list_res =  [x[0] for x in list_index[:res_len] ] # end output
+        res_size =  throld_size-1 if len(list_index) > throld_size -1 else len(list_index)
+        list_res =  [x[0] for x in list_index[:res_size] ] # end output
 
         list_res = self.randomTopicHeader(question_id, list_res, pre_set, rank_size, throld_size) #  header question random
-
         return list_res
 
 if __name__=='__main__':
-    recommend = RecommendQuestion()
+    recommend = RecommendQuestion()# object
     list_res = recommend.getEsResult(11021712, '题干', '等比,路程,里数,算法,健步', 1, 1, set(), 4)
     print list_res
