@@ -55,6 +55,7 @@ class Report(object):
             if answer == 'null' or answer == 'None' or answer == '' or answer == 'NULL' or answer == None or len(answer) == 0: continue
             if question in self.dict_realtion_quesion:
                 exam_list_records.append([question, student_id, ret, answer, submit_time, question_type])
+
                 self.dict_student_records[student_id].append([question, student_id, ret, answer, submit_time, question_type])
                 self.dict_content_answer['%s_%s' % (question, student_id)] = answer
             elif question in self.dict_parent_quesion:
@@ -633,34 +634,34 @@ class Report(object):
 
     def getExamData(self, dict_student_score, dict_relation_point13, dict_exercise_name):
         for exam_item in self.exam_list_records: # exam
-	        question, student_id, ret, answer, submit_time, question_type = exam_item
-	        if question in self.dict_realtion_quesion:
-	            link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
-	            arr_points = [int(x) for x in link_point_id.strip().split(',')]
-	            exam_key = '%s-%s' % (student_id, question_exercise_id)
-	            str_point1, str_name1, str_point3, str_name3 = '', '', '', ''
-	            is_first = True
-	            for point3 in arr_points:
-	                name3, point1, name1 = dict_relation_point13[point3]
-	                if is_first == True:
-	                    str_point3, str_name3, str_point1, str_name1 = str(point3), str(name3), str(point1), str(name1)
-	                    is_first = False
-	                else:
-	                    str_point3 += ',%d' % point3
-	                    str_name3 += ',%s' % name3
-	                    str_point1 += ',%d' % point1
-	                    str_name1 += ',%s' % name1
+            question, student_id, ret, answer, submit_time, question_type = exam_item
+            if question in self.dict_realtion_quesion:
+                link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
+                arr_points = [int(x) for x in link_point_id.strip().split(',')]
+                exam_key = '%s-%s' % (student_id, question_exercise_id)
+                str_point1, str_name1, str_point3, str_name3 = '', '', '', ''
+                is_first = True
+                for point3 in arr_points:
+                    name3, point1, name1 = dict_relation_point13[point3]
+                    if is_first == True:
+                        str_point3, str_name3, str_point1, str_name1 = str(point3), str(name3), str(point1), str(name1)
+                        is_first = False
+                    else:
+                        str_point3 += ',%d' % point3
+                        str_name3 += ',%s' % name3
+                        str_point1 += ',%d' % point1
+                        str_name1 += ',%s' % name1
 
-	            resource_name = dict_exercise_name[question_exercise_id]
-	            exercise_score = dict_student_score[exam_key] if exam_key in dict_student_score else 0
-	            a_score ,i_score =  self.getScore(question_num, answer)
+                resource_name = dict_exercise_name[question_exercise_id]
+                exercise_score = dict_student_score[exam_key] if exam_key in dict_student_score else 0
+                a_score ,i_score =  self.getScore(question_num, answer)
 
-	            error_text = self.getErrorText(answer)
-	            print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (student_id, link_question_id, question_type, str_point1, str_name1, str_point3,
-	                str_name3, submit_time, resource_name, exercise_score, question_exercise_id, a_score, i_score, difficulty, ret, question_num, error_text, 1)
+                error_text = self.getErrorText(answer)
+                print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % (student_id, link_question_id, question_type, str_point1, str_name1, str_point3,
+                    str_name3, submit_time, resource_name, exercise_score, question_exercise_id, a_score, i_score, difficulty, ret, question_num, error_text, 1)
 
     def getPracticeData(self, dict_relation_point13, dict_question_topic, dict_question_base_info):
-    	for practice_item in self.practice_list_records: # practice
+        for practice_item in self.practice_list_records: # practice
             question, student_id, ret, answer, submit_time, question_type = practice_item
             str_point1, str_name1, str_point3, str_name3 = '', '', '', ''
             is_first = True
@@ -724,37 +725,37 @@ class Report(object):
         is_first, insert_score = 1, 0
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
         dict_student_cnt = {}
-        records = self.exam_list_records + self.practice_list_records
+        records = self.exam_list_records #  self.practice_list_records
         for item in records:
             question, student_id, ret, answer, submit_time, question_type = item
             if submit_time > str_monday:
                 if question in self.dict_realtion_quesion:
                     link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
-                    question = link_question_id
 
-                if question in self.dict_realtion_quesion:
+                    answer_key = '%s_%s' % (question, student_id)
+                    if answer_key in self.dict_content_answer: answer = self.dict_content_answer[answer_key]
                     if answer == 'A' or answer == 'B':
                         ret = 1
                     else:
                         ret = 2
 
-                if ret > 1:
-                    if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
-                    if dict_student_cnt[student_id] < 12:
-                        #print '%s\t%s' % (student_id, question)
-                        if is_first == 1:
-                            update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question, 0, insert_score)
-                            is_first = 0
-                        else:
-                            update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question, 0, insert_score)
+                    if ret > 1:
+                        if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
+                        if dict_student_cnt[student_id] < 12:
+                            print '%s\t%s' % (student_id, link_question_id)
+                            if is_first == 1:
+                                update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                                is_first = 0
+                            else:
+                                update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
 
-                        dict_student_cnt[student_id] += 1
-                        insert_score += 1
+                            dict_student_cnt[student_id] += 1
+                            insert_score += 1
 
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 457733
+    exercise_id = 460295
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
@@ -766,7 +767,7 @@ if __name__=='__main__':
         import datetime, calendar 
         now_date = datetime.date.today()
         is_flag = (now_date.weekday()  == calendar.FRIDAY or now_date.weekday() == calendar.MONDAY or now_date.weekday()  == calendar.WEDNESDAY)
-        flag = 0 if is_flag == True else 1
+        flag = 1 if is_flag == True else 0
         report.import2DataBase(flag)
     elif sys.argv[1] == 'base':
         report.getData() # base data
