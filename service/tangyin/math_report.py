@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #coding=utf8
 from __future__ import division
+
 import sys,os
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -425,7 +426,7 @@ class Report(object):
                     new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, subject_id, 0)
 
         if is_new == 1:
-            self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_white_list')
+            self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_v3_white_list')
         else:
             self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
@@ -456,9 +457,9 @@ class Report(object):
 
                     insert_score += 1
 
-            #self.db_fetcher.commit_sql_cmd(insert_sql, 'mysql_logdata')
+            # self.db_fetcher.commit_sql_cmd(insert_sql, 'mysql_logdata')
             if is_new == 1:  # update mysql
-                self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_white_list') # new 
+                self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_v3_white_list') # new
             else:
                 self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
                     
@@ -715,17 +716,17 @@ class Report(object):
         self.getExamData(dict_student_score, dict_relation_point13, dict_exercise_name) # exam
         self.getPracticeData(dict_relation_point13, dict_question_topic, dict_question_base_info) # practice
 
-    def recommendMonday(self):
+    def recommendMonday(self, throld = 500):
         d1 = datetime.datetime.now()
-        d3 = d1 + datetime.timedelta(days =-7)
-        str_monday = d3.strftime("%Y-%m-%d %H:%M:%S")
+        d3 = d1 + datetime.timedelta(days =-14)
+        str_monday = d3.strftime("%Y-%m-%d 00:00:00")
 
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
         self.importDefault(0) # import
         is_first, insert_score = 1, 0
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
         dict_student_cnt = {}
-        records = self.exam_list_records #  self.practice_list_records
+        records = self.exam_list_records #+ self.practice_list_records
         for item in records:
             question, student_id, ret, answer, submit_time, question_type = item
             if submit_time > str_monday:
@@ -739,27 +740,27 @@ class Report(object):
                     else:
                         ret = 2
 
-                    if ret > 1:
-                        if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
-                        if dict_student_cnt[student_id] < 12:
-                            print '%s\t%s' % (student_id, link_question_id)
-                            if is_first == 1:
-                                update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
-                                is_first = 0
-                            else:
-                                update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                if ret != 1:
+                    if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
+                    if dict_student_cnt[student_id] < throld:
+                        # print '%s\t%s' % (student_id, link_question_id)
+                        if is_first == 1:
+                            update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                            is_first = 0
+                        else:
+                            update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
 
-                            dict_student_cnt[student_id] += 1
-                            insert_score += 1
+                        dict_student_cnt[student_id] += 1
+                        insert_score += 1
 
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 460295
+    exercise_id = 481676
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
-        #dict_question_words = report.getQuestionWords()
+        # dict_question_words = report.getQuestionWords()
         dict_students_point_question = report.statQustionReport() # report
         dict_diff = report.updateStuAdapt2Difficult() # update student feature
         dict_point_question_set = report.pointsRecQuestion(dict_students_point_question, dict_diff)
@@ -772,6 +773,6 @@ if __name__=='__main__':
     elif sys.argv[1] == 'base':
         report.getData() # base data
     elif sys.argv[1] == 'mon':
-        report.recommendMonday() # monday
+        report.recommendMonday() # mon
     else:
         pass # dual
