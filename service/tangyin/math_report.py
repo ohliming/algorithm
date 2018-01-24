@@ -407,53 +407,70 @@ class Report(object):
                 point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
 
-    def importDefault(self, is_new):
+    def importDefault(self, is_new, dict_question_topic):
         defult_list = [(10805815,0), (10806190, 2), (10805815, 4), (10806184, 6), (10806182, 8), (10806169, 10), (10806104, 12), (10806057, 14), (10805815, 16), (10806068, 18)]
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
-        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score) values"
+        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
         db_rows = self.db_fetcher.get_sql_result("select student_id from entity_student_white_list", "mysql_white_list")
         is_first = 1
         for row in db_rows:
             student_id = row[0]
             for item in defult_list:
                 question_id, subject_id = item
+
+                type_id = 2186
+                if question_id in dict_question_topic:
+                    set_topic = dict_question_topic[question_id]
+                    if len(set_topic) > 0:
+                        type_id = set_topic.pop()
+
                 if is_first == 1:
                     update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, subject_id, 0)
-                    if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, subject_id, 0)
+                    if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, subject_id, 0, 1, 3, type_id)
                     is_first = 0
                 else:
                     update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, subject_id, 0)
-                    new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, subject_id, 0)
+                    new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, subject_id, 0, 1, 3, type_id)
 
         if is_new == 1:
             self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_v3_white_list')
         else:
             self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
-    def import2DataBase(self, flag, is_new = 0, fname = 'student_rec.txt'):
-        self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
-        if is_new == 1: self.db_fetcher.commit_sql_cmd("delete from sync_student_recommend_question", 'mysql_white_list') # update
-        self.importDefault(is_new) # import 
+    def import2DataBase(self, flag, is_new = 1, fname = 'student_rec.txt'):
+        dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
+        if is_new == 1: 
+            self.db_fetcher.commit_sql_cmd("delete from sync_student_recommend_question", 'mysql_v3_white_list') # update
+        else:
+            self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
+
+        # self.importDefault(is_new, dict_question_topic) # import
         if flag == 1: # 1,3 5 recomend
             update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
             insert_sql = "insert into entity_question_recommend(student_id,student_name,point,point_name,question_id,recommend_id,keywords,difficulty) values"
-            new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score) values"
-            insert_score = 0
-            is_first = 1
+
+            new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
+            insert_score, is_first = 0, 1
             with open(fname) as rec_f:
                 for line in rec_f:
                     if insert_score > 1:
                         arr = line.strip().split('\t')
-                        student_id, question_id = arr[0], arr[5]
+                        student_id, question_id = arr[0], long(arr[5])
+                        type_id = 2186
+                        if question_id in dict_question_topic:
+                            set_topic = dict_question_topic[question_id]
+                            if len(set_topic) > 0:
+                                type_id = set_topic.pop()
+
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
                             insert_sql += "(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
-                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, 0, insert_score)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id)
                             is_first = 0
                         else:
                             update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
                             insert_sql += ",(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
-                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s)" % (student_id, question_id, 0, insert_score)
+                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id)
 
                     insert_score += 1
 
@@ -716,14 +733,16 @@ class Report(object):
         self.getExamData(dict_student_score, dict_relation_point13, dict_exercise_name) # exam
         self.getPracticeData(dict_relation_point13, dict_question_topic, dict_question_base_info) # practice
 
-    def recommendMonday(self, throld = 500):
+    def recommendMonday(self, is_new = 0, throld = 500):
+        dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
         d1 = datetime.datetime.now()
         d3 = d1 + datetime.timedelta(days =-14)
         str_monday = d3.strftime("%Y-%m-%d 00:00:00")
 
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
-        self.importDefault(0) # import
+        self.importDefault(0, dict_question_topic) # import
         is_first, insert_score = 1, 0
+        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
         dict_student_cnt = {}
         records = self.exam_list_records #+ self.practice_list_records
@@ -739,16 +758,18 @@ class Report(object):
                         ret = 1
                     else:
                         ret = 2
-
+ 
                 if ret != 1:
                     if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
                     if dict_student_cnt[student_id] < throld:
                         # print '%s\t%s' % (student_id, link_question_id)
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186)
                             is_first = 0
                         else:
                             update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186)
 
                         dict_student_cnt[student_id] += 1
                         insert_score += 1
@@ -756,7 +777,7 @@ class Report(object):
         self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 481676
+    exercise_id = 488243
     report = Report(exercise_id)
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
