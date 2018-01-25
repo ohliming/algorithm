@@ -774,7 +774,10 @@ class Report(object):
                         dict_student_cnt[student_id] += 1
                         insert_score += 1
 
-        self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+        if is_new == 1: 
+            self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_v3_white_list')
+        else:
+            self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
     exercise_id = 488243
