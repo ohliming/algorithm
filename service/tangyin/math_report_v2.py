@@ -383,6 +383,7 @@ class Report(object):
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
 
     def import2DataBase(self, flag, is_new = 1, fname = 'student_rec.txt'):
+        self.recommendMonday() # input error qustion
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
         if is_new == 1: 
             self.db_fetcher.commit_sql_cmd("delete from sync_student_recommend_question", 'mysql_v3_white_list') # update
@@ -677,14 +678,16 @@ class Report(object):
         self.getExamData(dict_student_score, dict_relation_point13, dict_exercise_name) # exam
         self.getPracticeData(dict_relation_point13, dict_question_topic, dict_question_base_info) # practice
 
-    def recommendMonday(self, throld = 500):
+    def recommendMonday(self, is_new = 0, throld = 500):
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
         d1 = datetime.datetime.now()
         d3 = d1 + datetime.timedelta(days =-14)
         str_monday = d3.strftime("%Y-%m-%d 00:00:00")
 
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
+        self.importDefault(0, dict_question_topic) # import
         is_first, insert_score = 1, 0
+        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
         dict_student_cnt = {}
         records = self.exam_list_records #+ self.practice_list_records
@@ -700,21 +703,26 @@ class Report(object):
                         ret = 1
                     else:
                         ret = 2
-
+ 
                 if ret != 1:
                     if student_id not in dict_student_cnt: dict_student_cnt[student_id] = 0
                     if dict_student_cnt[student_id] < throld:
                         # print '%s\t%s' % (student_id, link_question_id)
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186)
                             is_first = 0
                         else:
                             update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186)
 
                         dict_student_cnt[student_id] += 1
                         insert_score += 1
 
-        self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+        if is_new == 1: 
+            self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_v3_white_list')
+        else:
+            self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
     exercise_id = 488243
@@ -733,7 +741,5 @@ if __name__=='__main__':
         report.import2DataBase(flag)
     elif sys.argv[1] == 'base':
         report.getData() # base data
-    elif sys.argv[1] == 'mon':
-        report.recommendMonday() # mon
     else:
         pass # dual
