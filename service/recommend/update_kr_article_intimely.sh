@@ -1,1 +1,0 @@
-../seo/update_kr_article_intimely.sh

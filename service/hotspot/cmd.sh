@@ -61,9 +61,6 @@ case $run_cmd in
         ;;
     *)
         ## test
-        curl "data-internal.corp.36kr.com/hotspot?cmd=test"
-        echo ' '
-        curl "data-internal.corp.36kr.com/hotspot?cmd=hotspot&start_time=2015-11-13 00:00:00&end_time=2015-11-15 23:59:59"
         ;;
 esac
 

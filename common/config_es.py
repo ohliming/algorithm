@@ -24,31 +24,6 @@ mysql_online_audit = {
     "db":"[[[DB_AUDIT_NAME]]]",
 }
 
-es = {
-    "host":"[[[ES_HOST]]]",
-    "port":"9200",
-    "type":"info",
-    "index_com":"36kr_company",
-    "index_org":"36kr_organization",
-    "index_user":"36kr_user",
-    "index_city":"city",
-    "index_school":"school",
-    "index_tag":"tag",
-    "index_tag_crm":"tag_crm",
-    "index_article":"36kr_article",
-    "index_newsflash":"36kr_newsflash",
-    "index_writer":"36kr_writer",
-    "index_ad": "ad_mobile",
-    "index_qyservice": "qy_service",
-    "index_qyword": "qy_word",
-    "index_qytag": "qy_tag",
-    "index_keyword": "36kr_keyword",
-    "index_position": "position",
-    "index_com_crm": "company_crm",
-    #"index_log_pre":"36kr_log_",
-    #"index_log_statistic":"log_statistic",
-}
-
 es_w = {
     "index_com":"current_company_w",
     "index_org":"current_organization_w",

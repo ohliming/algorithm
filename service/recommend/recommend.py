@@ -150,7 +150,7 @@ class  RecommArticles(object):
 
     # 获取最新文章列表
     def get_latest_articles(self,recommend_size):
-        conn = httplib.HTTPConnection("cms.36kr.com", 80, True, 20)
+        conn = httplib.HTTPConnection("", 80, True, 20)
         retry = 3
         while retry > 0:
             try:

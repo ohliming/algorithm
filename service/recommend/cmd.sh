@@ -60,10 +60,6 @@ case $run_cmd in
         nohup ../tornado/babysitter -r data@36kr.com python ../recommend/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
         ;;
     *)
-        ## test
-        curl "data-internal.corp.36kr.com/recommend?cmd=test"
-        echo ' '
-        curl "data-internal.corp.36kr.com/recommend?cmd=recommend&id=5039412&publish=2015-11-08"
         ;;
 esac
 
