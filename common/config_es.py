@@ -38,9 +38,6 @@ es_r = {
 
 webapi = {
     #"log":"http://localhost:20521",
-    #"log":"http://data-internal.corp.36tr.com/log-statistic",
-    #"article": "http://36kr.com",
-    #"article": "http://staging.api.36kr.com",
     "article": "[[[ARTICLE_API_HOST]]]",
     "article_api_key": "[[[ARTICLE_API_KEY]]]",
 }
