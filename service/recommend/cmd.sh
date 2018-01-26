@@ -11,7 +11,7 @@
 
 ## 1.global conf
 run_cmd=$1
-port=10193
+port=8089
 process_num=2
 if [ $# -ge 2 ];then
     process_num=$2
@@ -40,7 +40,7 @@ case $run_cmd in
        # where name !='' and status>1 and is_deleted != 1" \
        # > id_name_url_app.txt
 
-        nohup ../tornado/babysitter -r data@36kr.com python ../recommend/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
+        nohup ../tornado/babysitter -r python ../recommend/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
         ;;
     stop)
         ## stop

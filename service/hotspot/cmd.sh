@@ -40,7 +40,7 @@ case $run_cmd in
        # where name !='' and status>1 and is_deleted != 1" \
        # > id_name_url_app.txt
 
-        nohup ../tornado/babysitter -r data@36kr.com python ../hotspot/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
+        nohup ../tornado/babysitter -r  python ../hotspot/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
         ;;
     stop)
         ## stop

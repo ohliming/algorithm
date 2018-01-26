@@ -23,8 +23,7 @@ class RecommendQuestion(object):
 
         self.dict_question_base_info = self.getQuestionBaseInfo() # base
         self.dict_question_quality = self.getQuestionQuality()
-        self.dict_question_topic, self.dict_topic_question = self.getQuestionTopic() # topic
-         
+        self.dict_question_topic, self.dict_topic_question = self.getQuestionTopic() # topic   
 
     def getThisQuestionTopic(self):
         return self.dict_question_topic
@@ -86,8 +85,7 @@ class RecommendQuestion(object):
         return dict_question_quality
 
     def getQuestionTopic(self, save_file = 'topic.txt'):
-        dict_question_topic = {}
-        dict_topic_question = {}
+        dict_question_topic, dict_topic_question = {}, {}
         max_num = 0
         with open(save_file) as handle_f:
             for line in handle_f:
@@ -149,8 +147,7 @@ class RecommendQuestion(object):
                 dict_topic_question[topic_id][key].append((question_id, extra_score))
                 write_f.write('%s\t%s\t%s\n' % (tid, question_id, topic_id))
 
-        # sort 
-        for topic in dict_topic_question:
+        for topic in dict_topic_question:  # sort
             for key in dict_topic_question[topic]:
                 dict_topic_question[topic][key] = sorted(dict_topic_question[topic][key], key = lambda x:x[-1], reverse = True) # 
         
@@ -178,7 +175,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = 'a3c392eb322a4f02aefc7060be0afaf3'):
+    def getHeaders(self, teacher_id = '83d05bc0c870473aaf0cb2554afcaa60'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -295,7 +292,7 @@ class RecommendQuestion(object):
                             if len(list_res_question) > rank_size: break
 
                         rnt = throld_size - len(list_res)
-                        while rnt > 0:
+                        while rnt > 0 and len(list_res_question) > 0:
                             pos = random.randint(0, len(list_res_question) - 1)
                             list_res.append(list_res_question[pos])
                             rnt += -1
@@ -360,5 +357,5 @@ class RecommendQuestion(object):
 
 if __name__=='__main__':
     recommend = RecommendQuestion()# object
-    list_res = recommend.getEsResult(11021712, '题干', '等比,路程,里数,算法,健步', 1, 1, set(), 4)
+    list_res = recommend.getEsResult(11021712, '题干', '等比,算法', 1, 1, set(), 4)
     print list_res
