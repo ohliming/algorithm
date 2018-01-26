@@ -255,7 +255,7 @@ class Report(object):
                 if point_name not in dict_students_point_question[student_id]:
                     dict_students_point_question[student_id][point_name] = [] 
 
-                dict_students_point_question[student_id][point_name].append((link_question_id, is_right, question_type, submit_time)) # question
+                dict_students_point_question[student_id][point_name].append((link_question_id, is_right, question_type, difficulty, submit_time)) # question
 
         dict_res_student_point_question = {}
         for student_id in dict_students_point_question:
@@ -273,9 +273,9 @@ class Report(object):
                 if len(sort_question) < cnt_rate: cnt_rate = len(sort_question)
 
                 for item in sort_question[:cnt_rate]:
-                    link_question_id, is_right, qtype, submit_time  = item
+                    link_question_id, is_right, qtype, difficulty, submit_time  = item
                     if is_right == 0:
-                        target_questions.append((link_question_id, qtype, submit_time))
+                        target_questions.append((link_question_id, qtype, difficulty, submit_time))
                     else:
                         right_rate += 1
 
@@ -331,7 +331,7 @@ class Report(object):
 
         return dict_point_org_question
 
-    def pointsRecQuestion(self, dict_students_point_question, dict_diff, throld = 4, error_range = 3):
+    def pointsRecQuestion(self, dict_students_point_question, throld = 4, error_range = 3):
         # 1,2 choice question 1:easy 2:difficulty 3,4: comprehensive problem 3:easy 4:difficulty
         # dict_point_org_question = self.getPoint2Question() # org question point
         dict_question_text = self.getQuestionWords()
@@ -349,15 +349,12 @@ class Report(object):
                 item_point, arr_question = item_target
                 item_one = item_point.strip().split('-')[0]
 
-                key = '%s-%s' % (student_id, item_one)
-
-                rateRight, difficulty = dict_diff[key] if key in dict_diff else (0.0, 1)
-               
+                key = '%s-%s' % (student_id, item_one) 
                 pre_set = pre_set | set([x[0] for x in arr_question]) # 
                 if len(arr_question) > error_range: 
                     arr_question = arr_question[:error_range]
 
-                for base_question, qtype, submit_time in arr_question:
+                for base_question, qtype, difficulty, submit_time in arr_question:
                     if haveTime <= 0: break
                     keywords, text = dict_question_text[base_question]
                     text = text.replace('\n', '').strip('\r').strip() # filter
@@ -383,6 +380,7 @@ class Report(object):
                 print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
 
     def import2DataBase(self, flag, is_new = 1, fname = 'student_rec.txt'):
+        # self.db_fetcher.commit_sql_cmd('delete from entity_blackList_answer_question', 'mysql_v3_white_list') # update blacklist
         self.recommendMonday() # input error qustion
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
         if is_new == 1: 
@@ -471,90 +469,6 @@ class Report(object):
             dict_question_diff[question_id] = int(difficulty)
 
         return dict_question_difficulty
-
-    def updateStuAdapt2Difficult(self, range_throld = 10, difficulty_throld = 10):
-        dict_exam_question = {}
-        dict_exam_difficulty = {}
-        dict_question_topic = self.recommend.getThisQuestionTopic() # 
-
-        for exam_item in self.exam_list_records:
-            question, student_id, ret, answer, submit_time, question_type = exam_item
-            if question in self.dict_realtion_quesion:
-                link_question_id, link_point_id, question_num, difficulty, question_exercise_id, question_type = self.dict_realtion_quesion[question]
-                arr_point = link_point_id.strip().split(',')
-                is_right = 1 if answer == 'A' or answer == 'B' else 0
-
-                for point in arr_point:
-                    key = '%s-%s' % (student_id, point)
-                    if key not in dict_exam_question:
-                        dict_exam_question[key] = []
-                        dict_exam_difficulty[key] = {}
-
-                    record = (question, is_right, difficulty, submit_time, question_type)
-                    dict_exam_question[key].append(record)
-                    if difficulty not in dict_exam_difficulty[key]: dict_exam_difficulty[key][difficulty] = []        
-                    dict_exam_difficulty[key][difficulty].append(record)
-
-        question_set = set([x[0] for x in self.practice_list_records])
-        dict_question_difficulty = self.getQuestionBaseInfo(question_set)
-
-        for practice_item in self.practice_list_records:
-            question, student_id, ret, answer, submit_time, question_type = practice_item
-            is_right = 1 if ret == 1 else 0
-            if question in dict_question_difficulty:
-                difficulty = self.dict_question_difficulty[question]
-                if question in dict_question_topic:
-                    topic_set = dict_question_topic[question]
-                    for topic in topic_set:
-                        if topic in self.dict_topic_point:
-                            point = self.dict_topic_point[topic]
-                            key = '%s-%s' % (student_id, point)
-                            if key not in dict_exam_question:
-                                dict_exam_question[key] = []
-                                dict_exam_difficulty[key] = {}
-
-                            if difficulty not in dict_exam_difficulty[key]: dict_exam_difficulty[key][difficulty] = []
-                            record = (question, is_right, difficulty, submit_time, question_type)
-                            dict_exam_difficulty[key][difficulty].append(record)
-                            dict_exam_question[key].append(record)
-
-        dict_res = {}
-        self.db_fetcher.commit_sql_cmd('delete from entity_student_feature', 'mysql_logdata')
-        for key in dict_exam_question:
-            arr_content = key.split('-')
-            student_id, point = arr_content[0], arr_content[1]
-            question_records = sorted(dict_exam_question[key], key = lambda x:x[-1], reverse =True)
-            right_cnt = 0
-            throld = min(len(question_records), range_throld)
-            #if throld < 10: continue
-            for record_item in question_records[:throld]:
-                question, is_right, difficulty, submit_time, question_type = record_item
-                right_cnt += is_right
-
-            rateRight = right_cnt / range_throld
-            adaDiff, pDiff = 0, -1
-            for difficulty in dict_exam_difficulty[key]:
-                drecords = sorted(dict_exam_difficulty[key][difficulty], key = lambda x:x[-1], reverse = True)
-                difficulty_throld = min(len(drecords), difficulty_throld)
-                #if difficulty_throld < 4: continue
-                dright_cnt = 0
-                for diff_item in drecords[:difficulty_throld]:
-                    question, is_right, difficulty, submit_time, question_type = diff_item
-                    dright_cnt += is_right
-
-                drateRight = dright_cnt / difficulty_throld
-                if drateRight > pDiff:
-                    adaDiff = difficulty
-                    pDiff = drateRight
-
-            point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[point]
-            insert_sql = "insert into entity_student_feature(student_id, point_id, point_name, adapt_difficulty, master) values(%s, %s, \'%s\', %s, %s)" \
-                    % (student_id, point, point_name, adaDiff, rateRight)
-
-            insert_id = self.db_fetcher.commit_sql_cmd(insert_sql, 'mysql_logdata')
-            dict_res[key] = rateRight, difficulty
-
-        return dict_res
 
     def getStudentScore(self):
         dict_student_score = {}
@@ -678,14 +592,13 @@ class Report(object):
         self.getExamData(dict_student_score, dict_relation_point13, dict_exercise_name) # exam
         self.getPracticeData(dict_relation_point13, dict_question_topic, dict_question_base_info) # practice
 
-    def recommendMonday(self, is_new = 0, throld = 500):
+    def recommendMonday(self, is_new = 1, throld = 500):
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
         d1 = datetime.datetime.now()
         d3 = d1 + datetime.timedelta(days =-14)
         str_monday = d3.strftime("%Y-%m-%d 00:00:00")
 
         self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
-        self.importDefault(0, dict_question_topic) # import
         is_first, insert_score = 1, 0
         new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
@@ -731,8 +644,8 @@ if __name__=='__main__':
         # 1: 考点版本 2: 习题版本
         # dict_question_words = report.getQuestionWords()
         dict_students_point_question = report.statQustionReport() # report
-        dict_diff = report.updateStuAdapt2Difficult() # update student feature
-        dict_point_question_set = report.pointsRecQuestion(dict_students_point_question, dict_diff)
+        # dict_diff = report.updateStuAdapt2Difficult() # update student feature
+        dict_point_question_set = report.pointsRecQuestion(dict_students_point_question)
     elif sys.argv[1] == 'input':
         import datetime, calendar 
         now_date = datetime.date.today()
