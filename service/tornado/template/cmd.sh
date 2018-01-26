@@ -23,7 +23,7 @@ mkdir log
 case $run_cmd in
     start)
         ## start
-        nohup ../tornado/babysitter -r data@36kr.com python ./server.py --port=$port --mode=$mode --processes=$num_process --threads=$num_thread --logdir=./log/ 1>/dev/null 2>&1 &
+        nohup ../tornado/babysitter -r python ./server.py --port=$port --mode=$mode --processes=$num_process --threads=$num_thread --logdir=./log/ 1>/dev/null 2>&1 &
         ;;
     stop)
         ## stop
@@ -40,7 +40,7 @@ case $run_cmd in
             echo $pid
             kill -9 $pid
         done
-        nohup ../tornado/babysitter -r data@36kr.com python ./server.py --port=$port --mode=$mode --processes=$num_process --threads=$num_thread --logdir=./log/ 1>/dev/null 2>&1 &
+        nohup ../tornado/babysitter -r python ./server.py --port=$port --mode=$mode --processes=$num_process --threads=$num_thread --logdir=./log/ 1>/dev/null 2>&1 &
         ;;
     *)
         ## test

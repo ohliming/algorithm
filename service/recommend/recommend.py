@@ -30,7 +30,7 @@ class  RecommArticles(object):
 
     def get_related_company(self,media_id):
         db_company = self.mysql_fetcher.get_sql_result("select a.similar_weight from company_similarity a \
-                join media_report b on b.reported_com = a.id where b.aid =%s and source=\'36kr\' limit 1" % media_id,'mysql_insight')
+                join media_report b on b.reported_com = a.id where b.aid =%s and source=\'\' limit 1" % media_id,'mysql_insight')
         if len(db_company) == 0 or len(db_company[0][0]) == 0:
             return {}
 

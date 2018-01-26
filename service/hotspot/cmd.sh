@@ -57,7 +57,7 @@ case $run_cmd in
             echo $pid
             kill -9 $pid
         done
-        nohup ../tornado/babysitter -r data@36kr.com python ../hotspot/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
+        nohup ../tornado/babysitter -r python ../hotspot/server.py --port=$port --mode=$mode --processes=$process_num --threads=$thread_num --logdir=./log/ >/dev/null 2>&1 &
         ;;
     *)
         ## test

@@ -10,4 +10,3 @@ fi
 ctime=`date "+%Y-%m-%d %H:%M:%S"`
 echo "[INFO] [$ctime] start scan online company" >> ${log}
 nohup python ./recommend.py  1>>${log} 2>&1
-curl "data-internal.corp.36kr.com/recommend?cmd=update"
