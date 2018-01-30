@@ -14,10 +14,9 @@ from common.db_fetcher import DataBaseFetcher
 
 class Report(object):
     """docstring for Report"""
-    def __init__(self, exercise_id, update_time = '2017-11-01 00:00:00'):
+    def __init__(self, update_time = '2017-11-01 00:00:00'):
         # do something inits
         self.db_fetcher = DataBaseFetcher()
-        self.exercise_id = exercise_id
         self.dict_content_answer = {} # error content
         self.curr_time = datetime.datetime.now()
 
@@ -382,7 +381,7 @@ class Report(object):
     def import2DataBase(self, flag, is_new = 1, fname = 'student_rec.txt'):
         dict_question_base_info = self.recommend.getThisQuestionBaseInfo() # question quality
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
-        if is_new == 1: 
+        if is_new == 1:
             # self.db_fetcher.commit_sql_cmd('delete from entity_blackList_answer_question', 'mysql_v3_white_list') # update blacklist
             self.db_fetcher.commit_sql_cmd("delete from sync_student_recommend_question", 'mysql_v3_white_list') # update
         else:
@@ -393,7 +392,8 @@ class Report(object):
             update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
             insert_sql = "insert into entity_question_recommend(student_id,student_name,point,point_name,question_id,recommend_id,keywords,difficulty) values"
 
-            new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id, upload_id) values"
+            # new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id, upload_id) values"
+            new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
             insert_score, is_first = 0, 1
             with open(fname) as rec_f:
                 for line in rec_f:
@@ -414,12 +414,12 @@ class Report(object):
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
                             insert_sql += "(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
-                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id, upload_id)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id)
                             is_first = 0
                         else:
                             update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
                             insert_sql += ",(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
-                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id, upload_id)
+                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id)
 
                     insert_score += 1
 
@@ -605,7 +605,7 @@ class Report(object):
         str_monday = d3.strftime("%Y-%m-%d 00:00:00")
 
         is_first, insert_score = 1, 0
-        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id, upload_id) values"
+        new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
         update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id, topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
         dict_student_cnt = {}
         records = self.exam_list_records #+ self.practice_list_records
@@ -633,11 +633,11 @@ class Report(object):
 
                         if is_first == 1:
                             update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
-                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186, upload_id)
+                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186)
                             is_first = 0
                         else:
                             update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, link_question_id, 0, insert_score)
-                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186, upload_id)
+                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, link_question_id, 0, insert_score, 1, 3, 2186)
 
                         dict_student_cnt[student_id] += 1
                         insert_score += 1
@@ -648,8 +648,7 @@ class Report(object):
             self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
 
 if __name__=='__main__':
-    exercise_id = 488243
-    report = Report(exercise_id)
+    report = Report()
     if sys.argv[1] == 'output':
         # 1: 考点版本 2: 习题版本
         # dict_question_words = report.getQuestionWords()
