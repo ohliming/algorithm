@@ -6,7 +6,7 @@ import sys,os
 reload(sys)
 sys.setdefaultencoding('utf-8')
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), '../../')))
-import json,math,MySQLdb,datetime
+import json,math,MySQLdb,datetime,time
 import similary_question as sq
 
 from recommend import RecommendQuestion
@@ -18,7 +18,6 @@ class Report(object):
         # do something inits
         self.db_fetcher = DataBaseFetcher()
         self.dict_content_answer = {} # error content
-        self.curr_time = datetime.datetime.now()
 
         self.update_time = update_time # update time
         self.recommend = RecommendQuestion()
@@ -336,7 +335,8 @@ class Report(object):
         dict_question_text = self.getQuestionWords()
         dict_question_target= {}
         dict_student_recommend_question = {}
-        print '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' % ('学生id', '学生名字', '考点', '考点名称', '原题id', '推荐习题id', '关键词', '难度')
+        cid  = 1
+        student_target = open('student_target.txt', 'w')
         for student_id in dict_students_point_question:
             sort_student_item = sorted(dict_students_point_question[student_id].items(), key = lambda x:len(x[-1]), reverse = False)
             student_name = self.dict_students[student_id]
@@ -373,61 +373,29 @@ class Report(object):
                         recommend_questions.append((base_question, keywords, rec_question, item_one, difficulty))
                         pre_set.add(rec_question)
 
+            
+            dict_question_base_info = self.recommend.getThisQuestionBaseInfo() # question quality
+            dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
+            insert_score = 0
             for rec_item in recommend_questions:
                 source_question, keywords, rec_question, item_point, difficulty = rec_item
                 point_name, ptype, question_type, level, parent_id, link_id = self.dict_point[item_point]
-                print "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s" % (student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty)
+                type_id = 2186
 
-    def import2DataBase(self, flag, is_new = 1, fname = 'student_rec.txt'):
-        dict_question_base_info = self.recommend.getThisQuestionBaseInfo() # question quality
-        dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
-        if is_new == 1:
-            # self.db_fetcher.commit_sql_cmd('delete from entity_blackList_answer_question', 'mysql_v3_white_list') # update blacklist
-            self.db_fetcher.commit_sql_cmd("delete from sync_student_recommend_question", 'mysql_v3_white_list') # update
-        else:
-            self.db_fetcher.commit_sql_cmd("delete from entity_recommend_question_bytopic", 'mysql_white_list') # update
+                if rec_question in dict_question_base_info:
+                    difficulty, question_type, upload_id = dict_question_base_info[rec_question]
+                else:
+                    upload_id = 0 
 
-        self.recommendMonday(dict_question_base_info) # input error qustion
-        if flag == 1: # 1,3 5 recomend
-            update_sql = "insert into entity_recommend_question_bytopic(system_id, type,chapter_id,topic_id, question_id, `master`, duration, important, subject_id, score, school_publish, org_id, org_type) values"
-            insert_sql = "insert into entity_question_recommend(student_id,student_name,point,point_name,question_id,recommend_id,keywords,difficulty) values"
+                if rec_question in dict_question_topic:
+                    set_topic = dict_question_topic[rec_question]
+                    if len(set_topic) > 0: type_id = set_topic.pop()
 
-            # new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id, upload_id) values"
-            new_sql = "insert into sync_student_recommend_question(system_id, resource_type, resource_id, subject_id, tag1, tag2, score, type, type_level, type_id) values"
-            insert_score, is_first = 0, 1
-            with open(fname) as rec_f:
-                for line in rec_f:
-                    if insert_score > 1:
-                        arr = line.strip().split('\t')
-                        student_id, question_id = arr[0], long(arr[5])
-                        type_id = 2186
-                        if question_id in dict_question_base_info:
-                            difficulty, question_type, upload_id = dict_question_base_info[question_id]
-                        else:
-                            upload_id = 0 
-
-                        if question_id in dict_question_topic:
-                            set_topic = dict_question_topic[question_id]
-                            if len(set_topic) > 0:
-                                type_id = set_topic.pop()
-
-                        if is_first == 1:
-                            update_sql += "(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
-                            insert_sql += "(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
-                            if is_new == 1: new_sql += "(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id)
-                            is_first = 0
-                        else:
-                            update_sql += ",(%s, 2, 0, 0, %s, 2, 2, 1, %s, %s, 0, 113, 2)" % (student_id, question_id, 0, insert_score)
-                            insert_sql += ",(%s,\'%s\',%s, \'%s\', %s, %s, \'%s\',%s)" % (arr[0], arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7])
-                            if is_new == 1: new_sql += ",(%s, 1, %s, %s, \'最近新错\', \'重难点\', %s, %s, %s, %s)" % (student_id, question_id, 0, insert_score, 1, 3, type_id)
-
-                    insert_score += 1
-
-            # self.db_fetcher.commit_sql_cmd(insert_sql, 'mysql_logdata')
-            if is_new == 1:  # update mysql
-                self.db_fetcher.commit_sql_cmd(new_sql, 'mysql_v3_white_list') # new
-            else:
-                self.db_fetcher.commit_sql_cmd(update_sql, 'mysql_white_list')
+                str_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
+                print "%s\t%s\t1\t%s\t%s\t\'最近新错\'\t\'重难点\'\t%s\t%s\t%s\t%s\t%s" % (cid, student_id, rec_question, 0, insert_score, str_time, 1, 3, type_id)
+                student_target.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (cid, student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty))
+                insert_score += 1
+                cid += 1
                     
     def getPoints(self):
         dict_point = {}
@@ -655,12 +623,6 @@ if __name__=='__main__':
         dict_students_point_question = report.statQustionReport() # report
         # dict_diff = report.updateStuAdapt2Difficult() # update student feature
         dict_point_question_set = report.pointsRecQuestion(dict_students_point_question)
-    elif sys.argv[1] == 'input':
-        import datetime, calendar 
-        now_date = datetime.date.today()
-        is_flag = (now_date.weekday()  == calendar.FRIDAY or now_date.weekday() == calendar.MONDAY or now_date.weekday()  == calendar.WEDNESDAY)
-        flag = 1 if is_flag == True else 0
-        report.import2DataBase(flag)
     elif sys.argv[1] == 'base':
         report.getData() # base data
     else:

@@ -39,15 +39,20 @@ class RecommendQuestion(object):
                 arr = line.strip().split('\t')
                 if len(arr) != 3: continue
 
-                qid, difficulty, question_type = long(arr[0]), int(arr[1]), int(arr[2])
-                dict_question_base_info[qid] = difficulty, question_type
+                qid, difficulty, question_type, upload_id = long(arr[0]), int(arr[1]), int(arr[2]), str(arr[3]).strip()
+                try:
+                	upload_id = long(upload_id)
+                except:
+                	upload_id = 0
+
+                dict_question_base_info[qid] = difficulty, question_type, upload_id
                 max_num = qid
 
-        sql = "select id, difficulty, question_type from neworiental_v3.entity_question where subject_id = 4 and id > %s order by id asc" % max_num
+        sql = "select id, difficulty, question_type, upload_id from neworiental_v3.entity_question where subject_id = 4 and id > %s order by id asc" % max_num
         rows = self.db_fetcher.get_sql_result(sql, "mysql_logdata")
         with open(save_file, 'a') as write_f:
             for row in rows:
-                qid, difficulty, str_question_type = row
+                qid, difficulty, str_question_type, upload_id = row
                 question_type = 1
                 if str_question_type == '选择题' or str_question_type == '单选题':
                     question_type = 1
@@ -56,8 +61,8 @@ class RecommendQuestion(object):
                 else:
                     question_type = 3
 
-                dict_question_base_info[qid] = difficulty, question_type
-                write_f.write('%s\t%s\t%s\n' % (qid, difficulty, question_type))
+                dict_question_base_info[qid] = difficulty, question_type, upload_id
+                write_f.write('%s\t%s\t%s\t%s\n' % (qid, difficulty, question_type, upload_id))
 
         return dict_question_base_info
 
@@ -105,7 +110,7 @@ class RecommendQuestion(object):
 
                 difficulty, question_type = 1, 1
                 if question_id in self.dict_question_base_info:
-                    difficulty, question_type = self.dict_question_base_info[question_id]
+                    difficulty, question_type, upload_id = self.dict_question_base_info[question_id]
 
                 dict_question_topic[question_id].add(topic_id) # add 
                 key = '%s-%s' % (difficulty, question_type)
@@ -131,7 +136,7 @@ class RecommendQuestion(object):
 
                 difficulty, question_type = 1, 1
                 if question_id in self.dict_question_base_info:
-                    difficulty, str_question_type = self.dict_question_base_info[question_id]
+                    difficulty, str_question_type, upload_id = self.dict_question_base_info[question_id]
                     if str_question_type == '选择题' or str_question_type == '单选题':
                         question_type = 1
                     elif str_question_type == '填空题':
@@ -175,7 +180,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '83d05bc0c870473aaf0cb2554afcaa60'):
+    def getHeaders(self, teacher_id = '9ec88514c95544fc981a520a5b45b8f8'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -276,7 +281,7 @@ class RecommendQuestion(object):
                 index = random.randint(0, tLen-1)
                 topic = list(topic_set)[index] # first
                 if question_id in self.dict_question_base_info:
-                    difficulty, qtype = self.dict_question_base_info[question_id]
+                    difficulty, qtype, upload_id = self.dict_question_base_info[question_id]
 
                     key = '%s-%s' % (difficulty, qtype)
                     if key in self.dict_topic_question[topic]:
