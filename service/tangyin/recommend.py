@@ -180,7 +180,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '9ec88514c95544fc981a520a5b45b8f8'):
+    def getHeaders(self, teacher_id = 'a72f2e66c414488887cc4bde4bdd4e61'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -306,15 +306,16 @@ class RecommendQuestion(object):
 
     def getEsResult(self, question_id, text, keywords, difficulty, bqtype, pre_set, throld_size, throld_page = 10, throld_cost = 5, rank_size = 20):
         """
-        url: http://jiaoshi.okjiaoyu.cn/ESRes4EMS/questionQuery?subjectId=4&keyword=%s&difficulty=&questionType=&page=3
         questionType:  1   选择题 2   填空题 3   判断题 4   简答题 6  综合题
         difficulty : １：易　２：中　３：难　４：极难
         """
         list_rank = []
         headers = self.getHeaders() # get headers
         str_pre = ''
+        # if bqtype == 1: bqtype = 101
         for page in range(1, throld_page):
             try:
+                # url = "http://jiaoshi.okjiaoyu.cn/teacher-center/search_singlequiz?keyword=%s&subject_id=4&queryType=0&difficulty=%s&type=%s&page=%s" % (keywords, difficulty, bqtype, page)
                 url = "http://jiaoshi.okjiaoyu.cn/teacher-center/search_singlequiz?_=1506480814420&teacher_id=ce36ea7e9c864af39d186b8e8b672864&type=&difficulty=%s&page=%s&keyword=%s&subject_id=4" % (difficulty, page, keywords)
                 res = self.getUrlContent(url)
                 res = res.replace('\r','').replace('\n','').replace('null', '').replace(':,',':\"\",').strip()
@@ -362,5 +363,5 @@ class RecommendQuestion(object):
 
 if __name__=='__main__':
     recommend = RecommendQuestion()# object
-    list_res = recommend.getEsResult(11021712, '题干', '等比,算法', 1, 1, set(), 4)
+    list_res = recommend.getEsResult(10800488, '题干', '函数,lg,ln2,已知,ln', 1, 1, set(), 4)
     print list_res

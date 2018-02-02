@@ -335,7 +335,7 @@ class Report(object):
         dict_question_text = self.getQuestionWords()
         dict_question_base_info = self.recommend.getThisQuestionBaseInfo() # question quality
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
-        # self.recommendMonday(dict_question_base_info) # error question
+        # self.recommendMonday(dict_question_base_info) # error questionsss
         dict_question_target= {}
         dict_student_recommend_question = {}
         cid  = 1
@@ -344,7 +344,7 @@ class Report(object):
             sort_student_item = sorted(dict_students_point_question[student_id].items(), key = lambda x:len(x[-1]), reverse = False)
             student_name = self.dict_students[student_id]
             haveTime = 60
-            recommend_questions = [] 
+            recommend_questions = []
             pre_set = set()
             for item_target in sort_student_item:
                 if haveTime <= 0: break
@@ -358,6 +358,13 @@ class Report(object):
 
                 for base_question, qtype, difficulty, submit_time in arr_question:
                     if haveTime <= 0: break
+                    if qtype == '选择题':
+                        qtype = 1
+                    elif qtype == '填空题':
+                        qtype = 2
+                    else:
+                        qtype = 3
+                    
                     keywords, text = dict_question_text[base_question]
                     text = text.replace('\n', '').strip('\r').strip() # filter
 
@@ -392,7 +399,7 @@ class Report(object):
                     if len(set_topic) > 0: type_id = set_topic.pop()
 
                 str_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-                print "%s\t%s\t1\t%s\t%s\t\'最近新错\'\t\'重难点\'\t%s\t%s\t%s\t%s\t%s" % (cid, student_id, rec_question, 0, insert_score, str_time, 1, 3, type_id)
+                # print "%s\t%s\t1\t%s\t%s\t最近新错\t重难点\t%s\t%s\t%s\t%s\t%s" % (cid, student_id, rec_question, 4, insert_score, str_time, 1, 3, type_id)
                 student_target.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (cid, student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty))
                 insert_score += 1
                 cid += 1
@@ -569,7 +576,7 @@ class Report(object):
     def recommendMonday(self, dict_question_base_info, is_new = 1, throld = 500):
         dict_question_topic = self.recommend.getThisQuestionTopic() # question topic
         d1 = datetime.datetime.now()
-        d3 = d1 + datetime.timedelta(days =-14)
+        d3 = d1 + datetime.timedelta(days =-7)
         str_monday = d3.strftime("%Y-%m-%d 00:00:00")
 
         is_first, insert_score = 1, 0
