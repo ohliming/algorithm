@@ -399,7 +399,7 @@ class Report(object):
                     if len(set_topic) > 0: type_id = set_topic.pop()
 
                 str_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
-                # print "%s\t%s\t1\t%s\t%s\t最近新错\t重难点\t%s\t%s\t%s\t%s\t%s" % (cid, student_id, rec_question, 4, insert_score, str_time, 1, 3, type_id)
+                print "%s\t%s\t1\t%s\t%s\t针对练习\t重点\t%s\t%s\t%s\t%s\t%s" % (cid, student_id, rec_question, 4, insert_score, str_time, 1, 3, type_id)
                 student_target.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" % (cid, student_id, student_name, item_point, point_name, source_question, rec_question, keywords, difficulty))
                 insert_score += 1
                 cid += 1
