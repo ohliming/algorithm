@@ -48,7 +48,7 @@ class RecommendQuestion(object):
                 dict_question_base_info[qid] = difficulty, question_type, upload_id
                 max_num = qid
 
-        sql = "select id, difficulty, question_type, upload_id from neworiental_v3.entity_question where subject_id = 4 and id > %s order by id asc" % max_num
+        sql = "select id, difficulty, question_type, upload_id from neworiental_v3.entity_question where subject_id = 4 and id > %s and state = \'ENABLED\' order by id asc" % max_num
         rows = self.db_fetcher.get_sql_result(sql, "mysql_logdata")
         with open(save_file, 'a') as write_f:
             for row in rows:
@@ -180,7 +180,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = 'a72f2e66c414488887cc4bde4bdd4e61'):
+    def getHeaders(self, teacher_id = '12cde9f34d2446f68669a78722ac26f1'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
