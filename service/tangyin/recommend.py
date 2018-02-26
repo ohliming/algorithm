@@ -48,7 +48,7 @@ class RecommendQuestion(object):
                 dict_question_base_info[qid] = difficulty, question_type, upload_id
                 max_num = qid
 
-        sql = "select id, difficulty, question_type, upload_id from neworiental_v3.entity_question where subject_id = 4 and id > %s and state = \'ENABLED\' order by id asc" % max_num
+        sql = "select id, difficulty, question_type, upload_id from neworiental_v3.entity_question where subject_id = 4 and id > %s and state != \'DISABLED\' order by id asc" % max_num
         rows = self.db_fetcher.get_sql_result(sql, "mysql_logdata")
         with open(save_file, 'a') as write_f:
             for row in rows:
@@ -180,7 +180,7 @@ class RecommendQuestion(object):
 
         return dict_question_rate
 
-    def getHeaders(self, teacher_id = '12cde9f34d2446f68669a78722ac26f1'):
+    def getHeaders(self, teacher_id = 'eefbac5a4e58432ca317642a2077d362'):
         return {
             'Host': 'jiaoshi.okjiaoyu.cn',
             'Connection': 'keep-alive',
@@ -297,7 +297,7 @@ class RecommendQuestion(object):
                             if len(list_res_question) > rank_size: break
 
                         rnt = throld_size - len(list_res)
-                        while rnt > 0 and len(list_res_question) > 0:
+                        while rnt > 0  and len(list_res_question) > 0:
                             pos = random.randint(0, len(list_res_question) - 1)
                             list_res.append(list_res_question[pos])
                             rnt += -1
@@ -312,11 +312,11 @@ class RecommendQuestion(object):
         list_rank = []
         headers = self.getHeaders() # get headers
         str_pre = ''
-        # if bqtype == 1: bqtype = 101
+        if bqtype == 1: bqtype = 101
         for page in range(1, throld_page):
             try:
-                # url = "http://jiaoshi.okjiaoyu.cn/teacher-center/search_singlequiz?keyword=%s&subject_id=4&queryType=0&difficulty=%s&type=%s&page=%s" % (keywords, difficulty, bqtype, page)
-                url = "http://jiaoshi.okjiaoyu.cn/teacher-center/search_singlequiz?_=1506480814420&teacher_id=ce36ea7e9c864af39d186b8e8b672864&type=&difficulty=%s&page=%s&keyword=%s&subject_id=4" % (difficulty, page, keywords)
+                url = "http://jiaoshi.okjiaoyu.cn/teacher-center/search_singlequiz?keyword=%s&subject_id=4&queryType=4&difficulty=%s&type=%s&page=%s" % (keywords, difficulty, bqtype, page)
+                # url = "http://jiaoshi.okjiaoyu.cn/teacher-center/search_singlequiz?_=1506480814420&teacher_id=ce36ea7e9c864af39d186b8e8b672864&type=&difficulty=%s&page=%s&keyword=%s&subject_id=4" % (difficulty, page, keywords)
                 res = self.getUrlContent(url)
                 res = res.replace('\r','').replace('\n','').replace('null', '').replace(':,',':\"\",').strip()
                 dict_result = json.loads(res.encode('utf8'))
@@ -347,7 +347,7 @@ class RecommendQuestion(object):
                         else:
                             qtype = 3
 
-                        bCharge = (cost > throld_cost) and (len(analysis) > 50) and bqtype == qtype
+                        bCharge = (cost > throld_cost) and (len(analysis) > 50)
                         if bCharge:
                             list_rank.append((qid, qtype, item['topic_list'], extra_score)) 
                             str_pre = question_body
