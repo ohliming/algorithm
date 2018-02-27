@@ -16,13 +16,15 @@ recommend = RecommendQuestion() # object
 db_fetcher = DataBaseFetcher()
 
 question_list = [] # set
+delete_sql = "DELETE FROM error_question_log WHERE question_id IN ( select c.question_id from (SELECT a.question_id FROM error_question_log a JOIN neworiental_v3.entity_question b ON a.question_id = b.id WHERE b.subject_id != 4) c)"
+db_fetcher.commit_sql_cmd(delete_sql, 'mysql_logdata') # update
 
 rows = db_fetcher.get_sql_result("select question_id from error_question_log", 'mysql_logdata')
 for row in rows:
     qid = row[0]
     question_list.append(qid)
 
-def getQuestionWords(question_list): # 
+def getQuestionWords(question_list): # question word
     dict_question_info = {}
     lSet = int(len(question_list) / 1000) + 1 
     start, end = 0, 0
@@ -33,7 +35,6 @@ def getQuestionWords(question_list): #
         str_sql = "select c.id, c.subject_id, t.type_id,t.struct_id, c.json_data, c.difficulty, c.question_type from neworiental_v3.entity_question c left \
             join neworiental_v3.entity_question_type t on t.type_id=c.question_type_id where c.id in (%s) and subject_id = 4" % str_question
 
-        print str_sql
         s_rows = db_fetcher.get_sql_result(str_sql,'mysql_logdata')
         for row in s_rows:
             question, subject_id, type_id, struct_id, json_data, difficulty, question_type = row
