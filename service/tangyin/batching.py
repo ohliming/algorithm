@@ -26,7 +26,7 @@ for row in rows:
 
 def getQuestionWords(question_list): # question word
     dict_question_info = {}
-    lSet = int(len(question_list) / 1000) + 1 
+    lSet = int(len(question_list) / 1000) + 2
     start, end = 0, 0
     for i in range(1, lSet):
         end = i * 1000
